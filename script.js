@@ -306,7 +306,7 @@ function renderModeList() {
   ui.modeList.innerHTML = modeData
     .map((mode) => `
       <article class="mode-tile" data-mode="${mode.id}">
-        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'stat' ? 'info' : mode.id === 'draft' ? 'gold' : mode.id === 'pickem' ? 'success' : mode.id === 'survivor' ? 'danger' : mode.id === 'blitz' ? 'info' : 'blue'}"></span> ${mode.tag}</div>
+        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'local' ? 'purple' : mode.id === 'stat' ? 'cyan' : mode.id === 'draft' ? 'orange' : mode.id === 'pickem' ? 'info' : mode.id === 'survivor' ? 'green' : 'gold'}"></span> ${mode.tag}</div>
         <h4>${mode.title}</h4>
         <p>${mode.description}</p>
       </article>
@@ -413,51 +413,82 @@ function getTwentyChallenge() {
   const era = eraWheel[Math.floor(Math.random() * eraWheel.length)];
 
   const positions = ['QB', 'RB', 'WR', 'TE', 'LT', 'LG', 'C', 'RG', 'RT', 'EDGE', 'DT', 'LB', 'CB', 'S', 'K', 'P'];
-  const slots = positions.map((position) => {
-    const candidates = playerPool
-      .filter((player) => player.position === position)
-      .filter((player) => player.team === team || player.era === era)
-      .sort((a, b) => b.rating - a.rating)
-      .slice(0, 4);
 
-    const filler = playerPool
-      .filter((player) => player.position === position)
-      .sort((a, b) => b.rating - a.rating)
-      .slice(0, 4);
+  const lineup = positions.map((position) => {
+    const teamEraPool = playerPool.filter((player) => player.position === position && (player.team === team || player.era === era));
+    const fallbackPool = playerPool.filter((player) => player.position === position);
+    const uniquePlayers = [...new Map([...teamEraPool, ...fallbackPool].map((player) => [player.name, player])).values()];
 
-    const options = candidates.length >= 4 ? candidates : filler;
-
-    return { position, options: options.slice(0, 4) };
+    return {
+      position,
+      options: uniquePlayers.slice(0, 12)
+    };
   });
 
-  return { team, era, slots, target: 390 };
+  return { team, era, lineup, target: 390 };
 }
 
 function renderTwentyMode() {
   twentyState = {
-    challenge: getTwentyChallenge(),
+    challenge: null,
     selections: {},
-    total: 0
+    total: 0,
+    spinning: false
   };
 
-  renderTwentyBoard();
+  ui.gameModeContent.innerHTML = `
+    <div class="mode-shell">
+      <div class="mode-header">
+        <h3>20-0 Challenge</h3>
+        <span class="score-tag">Ready</span>
+      </div>
+      <div class="game-panel">
+        <div class="wheel-panel">
+          <button type="button" class="wheel-button" id="twentySpinBtn" aria-label="Spin the team wheel">
+            <span class="wheel-core">SPIN</span>
+          </button>
+        </div>
+        <div class="prompt-box center">
+          <h4>Spin for the team and era</h4>
+          <p>Pick a player for every position from the list below and try to surpass the target score.</p>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('twentySpinBtn').addEventListener('click', () => {
+    twentyState.spinning = true;
+    const spinButton = document.getElementById('twentySpinBtn');
+    spinButton.classList.add('spinning');
+
+    setTimeout(() => {
+      twentyState.spinning = false;
+      twentyState.challenge = getTwentyChallenge();
+      twentyState.selections = {};
+      twentyState.total = 0;
+      spinButton.classList.remove('spinning');
+      renderTwentyBoard();
+    }, 900);
+  });
 }
 
 function renderTwentyBoard() {
+  if (!twentyState.challenge) {
+    renderTwentyMode();
+    return;
+  }
+
   const challenge = twentyState.challenge;
   const selectedCount = Object.keys(twentyState.selections).length;
-  const isComplete = selectedCount === challenge.slots.length;
+  const isComplete = selectedCount === challenge.lineup.length;
 
-  const slotCards = challenge.slots.map((slot) => {
+  const slotCards = challenge.lineup.map((slot) => {
     const selected = twentyState.selections[slot.position];
-    const buttons = slot.options.map((player) => {
-      const isSelected = selected && selected.name === player.name;
-      return `
-        <button class="slot-choice ${isSelected ? 'selected' : ''}" data-position="${slot.position}" data-player="${player.name}">
-          ${player.name} (${player.rating})
-        </button>
-      `;
-    }).join('');
+    const options = slot.options.map((player) => `
+      <option value="${player.name}" ${selected && selected.name === player.name ? 'selected' : ''}>
+        ${player.name} (${player.rating})
+      </option>
+    `).join('');
 
     return `
       <div class="slot-card">
@@ -465,7 +496,12 @@ function renderTwentyBoard() {
           <span class="slot-label">${slot.position}</span>
           ${selected ? `<span class="slot-picked">${selected.name}</span>` : '<span class="slot-picked muted">Open</span>'}
         </div>
-        <div class="slot-options">${buttons}</div>
+        <div class="slot-picker">
+          <select class="slot-select" data-position="${slot.position}">
+            <option value="">Pick ${slot.position}</option>
+            ${options}
+          </select>
+        </div>
       </div>
     `;
   }).join('');
@@ -505,7 +541,7 @@ function renderTwentyBoard() {
       <div class="game-panel">
         <div class="prompt-box">
           <h4>Wheel landed on ${challenge.team} in the ${challenge.era}</h4>
-          <p>Choose the best player for each position to build the lineup and hit the target.</p>
+          <p>Choose a player for each listed position to build the lineup and hit the target.</p>
         </div>
         <div class="wheel-result">
           <div class="wheel-badge">${challenge.team}</div>
@@ -516,19 +552,18 @@ function renderTwentyBoard() {
     </div>
   `;
 
-  ui.gameModeContent.querySelectorAll('.slot-choice').forEach((button) => {
-    button.addEventListener('click', () => {
-      const playerName = button.dataset.player;
-      const position = button.dataset.position;
-      const player = challenge.slots
-        .find((slot) => slot.position === position)
-        .options.find((candidate) => candidate.name === playerName);
+  ui.gameModeContent.querySelectorAll('.slot-select').forEach((select) => {
+    select.addEventListener('change', () => {
+      const position = select.dataset.position;
+      const chosenName = select.value;
+      if (!chosenName) return;
 
-      if (!player) return;
+      const chosenSlot = challenge.lineup.find((slot) => slot.position === position);
+      const chosenPlayer = chosenSlot.options.find((player) => player.name === chosenName);
+      if (!chosenPlayer) return;
 
-      twentyState.selections[position] = player;
+      twentyState.selections[position] = chosenPlayer;
       twentyState.total = Object.values(twentyState.selections).reduce((sum, item) => sum + item.rating, 0);
-
       renderTwentyBoard();
     });
   });
@@ -564,7 +599,7 @@ function renderTriviaMode() {
   ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const isCorrect = button.dataset.correct === 'true';
-      const payout = trivia.difficulty === 'Rookie' ? 50 : trivia.difficulty === 'Pro' ? 80 : trivia.difficulty === 'All-Pro' ? 120 : trivia.difficulty === 'Hall of Fame' ? 160 : trivia.difficulty === 'Legend' ? 220 : 180;
+      const payout = trivia.difficulty === 'Rookie' ? 50 : trivia.difficulty === 'Pro' ? 80 : trivia.difficulty === 'All-Pro' ? 120 : trivia.difficulty === 'Hall of Fame' ? 160 : 220;
       if (isCorrect) {
         state.coins += payout;
         state.streak += 1;
@@ -1332,4 +1367,3 @@ function bootstrap() {
 }
 
 bootstrap();
-
