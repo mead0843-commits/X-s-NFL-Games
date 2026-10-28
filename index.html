@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>X's NFL Games</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="brand-block">
+          <div class="brand-mark">X</div>
+          <div>
+            <div class="eyebrow">NFL</div>
+            <h1>X's NFL Games</h1>
+          </div>
+        </div>
+
+        <nav class="side-nav">
+          <button class="nav-btn active" data-view="home">Home</button>
+          <button class="nav-btn" data-view="modes">Modes</button>
+          <button class="nav-btn" data-view="team">Ultimate Team</button>
+          <button class="nav-btn" data-view="profile">Profile</button>
+          <button class="nav-btn" data-view="local">Local Duel</button>
+        </nav>
+
+        <div class="sidebar-card">
+          <div class="card-label">Season Pass</div>
+          <div class="pass-track">
+            <div id="passFill" class="pass-fill"></div>
+          </div>
+          <div class="pass-meta">
+            <span>Tier <strong id="tierValue">1</strong></span>
+            <span id="xpValue">0 / 500 XP</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="topbar-title-wrap">
+            <div class="eyebrow">Game Hub</div>
+            <h2 id="screenTitle">Home</h2>
+          </div>
+
+          <div class="player-meta">
+            <div class="coin-box">
+              <span class="coin-icon">◉</span>
+              <span id="coinCount">0</span>
+            </div>
+            <div class="avatar-badge">
+              <div class="avatar-ring">X</div>
+            </div>
+          </div>
+        </header>
+
+        <section id="homeView" class="view active">
+          <div class="hero-panel">
+            <div>
+              <div class="eyebrow accent">Daily Game Day</div>
+              <h3>Stack wins. Build your legacy.</h3>
+            </div>
+            <button class="primary-btn" data-mode="twenty">Play 20-0 Challenge</button>
+          </div>
+
+          <div class="quick-grid">
+            <article class="mode-card featured" data-mode="twenty">
+              <div class="mode-topline"><span class="dot danger"></span> 20-0</div>
+              <h4>20-0 Challenge</h4>
+              <p>Predict a streak of outcomes and turn pressure into points.</p>
+            </article>
+            <article class="mode-card" data-mode="trivia">
+              <div class="mode-topline"><span class="dot info"></span> Trivia</div>
+              <h4>NFL IQ</h4>
+              <p>Choose your difficulty and chase knowledge-based coins.</p>
+            </article>
+            <article class="mode-card" data-mode="guess">
+              <div class="mode-topline"><span class="dot success"></span> Guess</div>
+              <h4>Guess the Player</h4>
+              <p>Use clues and deduction to crack the player in minimal guesses.</p>
+            </article>
+            <article class="mode-card" data-mode="packs">
+              <div class="mode-topline"><span class="dot gold"></span> Team</div>
+              <h4>Ultimate Team</h4>
+              <p>Earn packs and collect player cards to build your roster.</p>
+            </article>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-box">
+              <div class="stat-label">Current Streak</div>
+              <div class="stat-value" id="streakCount">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Local Wins</div>
+              <div class="stat-value" id="localWinsCount">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Cards</div>
+              <div class="stat-value" id="cardCount">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Pack Count</div>
+              <div class="stat-value" id="packCount">0</div>
+            </div>
+          </div>
+        </section>
+
+        <section id="modesView" class="view">
+          <div class="section-header">
+            <h3>Game Modes</h3>
+          </div>
+          <div class="mode-list" id="modeList"></div>
+        </section>
+
+        <section id="teamView" class="view">
+          <div class="section-header two-up">
+            <h3>Ultimate Team</h3>
+            <button class="primary-btn small" id="openPackBtn">Open Pack</button>
+          </div>
+
+          <div class="pack-panel">
+            <div class="pack-box" id="packBox">PACK</div>
+            <div class="pack-info">
+              <div class="small-label">Pack Inventory</div>
+              <div class="big-value" id="packInventory">0</div>
+            </div>
+          </div>
+
+          <div class="collection-grid" id="collectionGrid"></div>
+        </section>
+
+        <section id="profileView" class="view">
+          <div class="profile-panel">
+            <div class="profile-header">
+              <div class="avatar-large">X</div>
+              <div>
+                <div class="eyebrow">Profile</div>
+                <h3 id="profileName">X</h3>
+              </div>
+            </div>
+            <div class="profile-lines">
+              <div><span>Title</span><strong id="titleValue">Rookie</strong></div>
+              <div><span>Coins</span><strong id="profileCoins">0</strong></div>
+              <div><span>Best Streak</span><strong id="bestStreakValue">0</strong></div>
+            </div>
+          </div>
+
+          <div class="shop-grid" id="shopGrid"></div>
+        </section>
+
+        <section id="localView" class="view">
+          <div class="section-header">
+            <h3>Local Duel</h3>
+          </div>
+          <div id="localDuelContent"></div>
+        </section>
+
+        <section id="gameModeView" class="view">
+          <div id="gameModeContent"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
