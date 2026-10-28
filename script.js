@@ -26,7 +26,12 @@ const defaultState = {
     twenty: 0,
     trivia: 0,
     guess: 0,
-    local: 0
+    local: 0,
+    stat: 0,
+    draft: 0,
+    pickem: 0,
+    survivor: 0,
+    blitz: 0
   }
 };
 
@@ -65,6 +70,36 @@ const modeData = [
     title: 'Local Duel',
     description: 'Head-to-head couch challenge: no internet needed, just bragging rights and coins.',
     tag: '2P'
+  },
+  {
+    id: 'stat',
+    title: 'Stat Attack',
+    description: 'Pick the correct stat leader in a fast, knowledge-heavy challenge.',
+    tag: 'Stats'
+  },
+  {
+    id: 'draft',
+    title: 'Draft Dash',
+    description: 'Build a mock draft board with smart picks, positional needs, and coin rewards.',
+    tag: 'Draft'
+  },
+  {
+    id: 'pickem',
+    title: 'Pick’em Playoff',
+    description: 'Predict winners across playoff rounds and chase the payout.',
+    tag: 'Pick'
+  },
+  {
+    id: 'survivor',
+    title: 'Survivor League',
+    description: 'Pick one team each slate and survive without getting eliminated.',
+    tag: 'Survive'
+  },
+  {
+    id: 'blitz',
+    title: 'Blitz Rush',
+    description: 'Fast reaction mode: answer instant football prompts under pressure.',
+    tag: 'Rush'
   }
 ];
 
@@ -271,7 +306,7 @@ function renderModeList() {
   ui.modeList.innerHTML = modeData
     .map((mode) => `
       <article class="mode-tile" data-mode="${mode.id}">
-        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : 'blue'}"></span> ${mode.tag}</div>
+        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'stat' ? 'info' : mode.id === 'draft' ? 'gold' : mode.id === 'pickem' ? 'success' : mode.id === 'survivor' ? 'danger' : mode.id === 'blitz' ? 'info' : 'blue'}"></span> ${mode.tag}</div>
         <h4>${mode.title}</h4>
         <p>${mode.description}</p>
       </article>
@@ -341,7 +376,12 @@ function openMode(modeId) {
     trivia: renderTriviaMode,
     guess: renderGuessMode,
     packs: renderPackMode,
-    local: renderLocalMode
+    local: renderLocalMode,
+    stat: renderStatAttackMode,
+    draft: renderDraftDashMode,
+    pickem: renderPickemMode,
+    survivor: renderSurvivorMode,
+    blitz: renderBlitzMode
   };
 
   if (modeId === 'packs') {
@@ -349,7 +389,17 @@ function openMode(modeId) {
     return;
   }
 
-  document.getElementById('screenTitle').textContent = modeId === 'twenty' ? '20-0 Challenge' : modeId === 'trivia' ? 'NFL Trivia' : modeId === 'guess' ? 'Guess the Player' : 'Local Duel';
+  document.getElementById('screenTitle').textContent =
+    modeId === 'twenty' ? '20-0 Challenge' :
+    modeId === 'trivia' ? 'NFL Trivia' :
+    modeId === 'guess' ? 'Guess the Player' :
+    modeId === 'stat' ? 'Stat Attack' :
+    modeId === 'draft' ? 'Draft Dash' :
+    modeId === 'pickem' ? 'Pick’em Playoff' :
+    modeId === 'survivor' ? 'Survivor League' :
+    modeId === 'blitz' ? 'Blitz Rush' :
+    'Local Duel';
+
   document.querySelectorAll('.view').forEach((view) => view.classList.remove('active'));
   document.getElementById('gameModeView').classList.add('active');
 
@@ -514,7 +564,7 @@ function renderTriviaMode() {
   ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const isCorrect = button.dataset.correct === 'true';
-      const payout = trivia.difficulty === 'Rookie' ? 50 : trivia.difficulty === 'Pro' ? 80 : trivia.difficulty === 'All-Pro' ? 120 : trivia.difficulty === 'Hall of Fame' ? 160 : trivia.difficulty === 'Legend' ? 220 : 200;
+      const payout = trivia.difficulty === 'Rookie' ? 50 : trivia.difficulty === 'Pro' ? 80 : trivia.difficulty === 'All-Pro' ? 120 : trivia.difficulty === 'Hall of Fame' ? 160 : trivia.difficulty === 'Legend' ? 220 : 180;
       if (isCorrect) {
         state.coins += payout;
         state.streak += 1;
@@ -586,9 +636,7 @@ function renderGuessMode() {
             <h4>Clues</h4>
             <p>Team: ${target.team} • Position: ${target.position} • Era: ${target.era} • Stat Range: ${target.statRange}</p>
           </div>
-          <div class="guess-board">
-            ${rows}
-          </div>
+          <div class="guess-board">${rows}</div>
           <div class="answer-grid">
             ${playerPool.map((player) => `<button class="guess-btn" data-name="${player.name}">${player.name}</button>`).join('')}
           </div>
@@ -867,6 +915,356 @@ function startLocalDuel() {
   });
 }
 
+function renderStatAttackMode() {
+  const prompts = [
+    {
+      prompt: 'Who led the NFL in rushing yards in 2023?',
+      choices: ['Christian McCaffrey', 'Derrick Henry', 'Bijan Robinson', 'Saquon Barkley'],
+      answer: 0,
+      reward: 120
+    },
+    {
+      prompt: 'Which QB threw the most touchdowns in 2022?',
+      choices: ['Patrick Mahomes', 'Joe Burrow', 'Josh Allen', 'Jalen Hurts'],
+      answer: 0,
+      reward: 140
+    },
+    {
+      prompt: 'Which receiver had the most receiving yards in 2023?',
+      choices: ['JaMarr Chase', 'Tyreek Hill', 'A.J. Brown', 'Stefon Diggs'],
+      answer: 0,
+      reward: 150
+    },
+    {
+      prompt: 'Who led the NFL in sacks in 2023?',
+      choices: ['Myles Garrett', 'Nick Bosa', 'T.J. Watt', 'Micah Parsons'],
+      answer: 0,
+      reward: 160
+    }
+  ];
+
+  const round = prompts[Math.floor(Math.random() * prompts.length)];
+
+  ui.gameModeContent.innerHTML = `
+    <div class="mode-shell">
+      <div class="mode-header">
+        <h3>Stat Attack</h3>
+        <span class="score-tag">Quick stats</span>
+      </div>
+      <div class="game-panel">
+        <div class="prompt-box">
+          <h4>${round.prompt}</h4>
+        </div>
+        <div class="answer-grid">
+          ${round.choices.map((choice, index) => `
+            <button class="choice-btn" data-answer="${index}">${choice}</button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const selected = Number(button.dataset.answer);
+      const isCorrect = selected === round.answer;
+      const payout = round.reward;
+
+      if (isCorrect) {
+        state.coins += payout;
+        state.modeWins.stat += 1;
+        addXp(110);
+        state.streak += 1;
+      } else {
+        state.streak = 0;
+        addXp(25);
+      }
+
+      persistState();
+      updateStats();
+
+      const answerButtons = [...ui.gameModeContent.querySelectorAll('.choice-btn')];
+      answerButtons.forEach((btn) => {
+        btn.disabled = true;
+        if (Number(btn.dataset.answer) === round.answer) btn.classList.add('correct');
+        else if (btn === button) btn.classList.add('wrong');
+      });
+
+      setTimeout(() => {
+        ui.gameModeContent.innerHTML = `
+          <div class="mode-shell">
+            <div class="mode-header">
+              <h3>Stat Attack</h3>
+            </div>
+            <div class="result-banner ${isCorrect ? 'win' : 'loss'}">
+              <h4>${isCorrect ? 'Correct!' : 'Nice try.'}</h4>
+              <p>${isCorrect ? `You earned ${payout} coins.` : `Correct answer: ${round.choices[round.answer]}`}</p>
+              <button class="primary-btn small" onclick="renderStatAttackMode()">Play again</button>
+            </div>
+          </div>
+        `;
+      }, 500);
+    });
+  });
+}
+
+function renderDraftDashMode() {
+  const positions = [
+    { slot: 'QB', players: ['Patrick Mahomes', 'Joe Burrow', 'Josh Allen'] },
+    { slot: 'RB', players: ['Christian McCaffrey', 'Derrick Henry', 'Bijan Robinson'] },
+    { slot: 'WR', players: ['JaMarr Chase', 'Tyreek Hill', 'Mike Evans'] },
+    { slot: 'TE', players: ['Travis Kelce', 'George Kittle', 'Sam LaPorta'] }
+  ];
+
+  const picks = positions.map((item) => ({
+    ...item,
+    selected: item.players[Math.floor(Math.random() * item.players.length)]
+  }));
+
+  ui.gameModeContent.innerHTML = `
+    <div class="mode-shell">
+      <div class="mode-header">
+        <h3>Draft Dash</h3>
+        <span class="score-tag">Pick 3</span>
+      </div>
+      <div class="game-panel">
+        <div class="prompt-box">
+          <h4>Build the best 3-player draft board</h4>
+        </div>
+        <div class="answer-grid">
+          ${picks.map((pick) => `
+            <button class="choice-btn" data-slot="${pick.slot}" data-pick="${pick.selected}">
+              ${pick.slot}: ${pick.selected}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const slot = button.dataset.slot;
+      const selection = button.dataset.pick;
+      const reward = 160;
+
+      state.coins += reward;
+      state.modeWins.draft += 1;
+      addXp(140);
+      persistState();
+      updateStats();
+
+      ui.gameModeContent.innerHTML = `
+        <div class="mode-shell">
+          <div class="mode-header">
+            <h3>Draft Dash</h3>
+          </div>
+          <div class="result-banner win">
+            <h4>Draft board locked</h4>
+            <p>You drafted ${selection} at ${slot} and earned ${reward} coins.</p>
+            <button class="primary-btn small" onclick="renderDraftDashMode()">Try again</button>
+          </div>
+        </div>
+      `;
+    });
+  });
+}
+
+function renderPickemMode() {
+  const rounds = [
+    {
+      round: 'Wild Card',
+      picks: [
+        { team: 'Chiefs', winner: true },
+        { team: 'Bills', winner: true },
+        { team: 'Eagles', winner: true },
+        { team: 'Ravens', winner: false }
+      ]
+    },
+    {
+      round: 'Divisional',
+      picks: [
+        { team: '49ers', winner: true },
+        { team: 'Cowboys', winner: true },
+        { team: 'Bengals', winner: false },
+        { team: 'Ravens', winner: true }
+      ]
+    }
+  ];
+
+  const current = rounds[Math.floor(Math.random() * rounds.length)];
+
+  ui.gameModeContent.innerHTML = `
+    <div class="mode-shell">
+      <div class="mode-header">
+        <h3>Pick’em Playoff</h3>
+        <span class="score-tag">${current.round}</span>
+      </div>
+      <div class="game-panel">
+        <div class="prompt-box">
+          <h4>Pick the teams you think will win</h4>
+        </div>
+        <div class="answer-grid">
+          ${current.picks.map((pick) => `
+            <button class="choice-btn" data-team="${pick.team}" data-win="${pick.winner}">
+              ${pick.team}
+            </button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const isRight = button.dataset.win === 'true';
+      const reward = isRight ? 180 : 80;
+
+      if (isRight) {
+        state.coins += reward;
+        state.modeWins.pickem += 1;
+        addXp(150);
+      } else {
+        state.streak = 0;
+        addXp(20);
+      }
+
+      persistState();
+      updateStats();
+
+      ui.gameModeContent.innerHTML = `
+        <div class="mode-shell">
+          <div class="mode-header">
+            <h3>Pick’em Playoff</h3>
+          </div>
+          <div class="result-banner ${isRight ? 'win' : 'loss'}">
+            <h4>${isRight ? 'Correct pick' : 'Bad break'}</h4>
+            <p>${isRight ? `You won ${reward} coins.` : 'The correct pick was based on the matchup.'}</p>
+            <button class="primary-btn small" onclick="renderPickemMode()">Play again</button>
+          </div>
+        </div>
+      `;
+    });
+  });
+}
+
+function renderSurvivorMode() {
+  const teams = ['Chiefs', 'Bills', '49ers', 'Eagles', 'Ravens', 'Bengals', 'Cowboys', 'Dolphins'];
+  const pick = teams[Math.floor(Math.random() * teams.length)];
+  const reward = 200;
+
+  ui.gameModeContent.innerHTML = `
+    <div class="mode-shell">
+      <div class="mode-header">
+        <h3>Survivor League</h3>
+        <span class="score-tag">One team only</span>
+      </div>
+      <div class="game-panel">
+        <div class="prompt-box">
+          <h4>Choose one team to survive the week</h4>
+          <p>Pick the team you believe will win this slate.</p>
+        </div>
+        <div class="answer-grid">
+          ${teams.map((team) => `
+            <button class="choice-btn" data-team="${team}">${team}</button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const chosen = button.dataset.team;
+      const survived = chosen === pick;
+
+      state.coins += survived ? reward : 50;
+      state.modeWins.survivor += 1;
+      addXp(survived ? 180 : 60);
+      state.streak = survived ? state.streak + 1 : 0;
+
+      persistState();
+      updateStats();
+
+      ui.gameModeContent.innerHTML = `
+        <div class="mode-shell">
+          <div class="mode-header">
+            <h3>Survivor League</h3>
+          </div>
+          <div class="result-banner ${survived ? 'win' : 'loss'}">
+            <h4>${survived ? 'Survived' : 'Eliminated'}</h4>
+            <p>${survived ? `You picked the right team and won ${reward} coins.` : 'Your team was the wrong call.'}</p>
+            <button class="primary-btn small" onclick="renderSurvivorMode()">Try again</button>
+          </div>
+        </div>
+      `;
+    });
+  });
+}
+
+function renderBlitzMode() {
+  const cards = [
+    { prompt: 'Who has the most career passing TDs?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], answer: 0 },
+    { prompt: 'Who rushed for 1,000 yards in 2023?', choices: ['Christian McCaffrey', 'Derrick Henry', 'Bijan Robinson', 'Saquon Barkley'], answer: 0 },
+    { prompt: 'Who won Super Bowl LVIII?', choices: ['Chiefs', '49ers', 'Eagles', 'Ravens'], answer: 0 },
+    { prompt: 'Who had the most receiving yards in 2023?', choices: ['JaMarr Chase', 'Tyreek Hill', 'Stefon Diggs', 'Mike Evans'], answer: 0 }
+  ];
+
+  const current = cards[Math.floor(Math.random() * cards.length)];
+
+  ui.gameModeContent.innerHTML = `
+    <div class="mode-shell">
+      <div class="mode-header">
+        <h3>Blitz Rush</h3>
+        <span class="score-tag">10-second rounds</span>
+      </div>
+      <div class="game-panel">
+        <div class="prompt-box">
+          <h4>${current.prompt}</h4>
+        </div>
+        <div class="answer-grid">
+          ${current.choices.map((choice, index) => `
+            <button class="choice-btn" data-answer="${index}">${choice}</button>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const selected = Number(button.dataset.answer);
+      const isCorrect = selected === current.answer;
+      const payout = isCorrect ? 220 : 60;
+
+      if (isCorrect) {
+        state.coins += payout;
+        state.modeWins.blitz += 1;
+        addXp(180);
+      } else {
+        state.streak = 0;
+        addXp(20);
+      }
+
+      persistState();
+      updateStats();
+
+      ui.gameModeContent.innerHTML = `
+        <div class="mode-shell">
+          <div class="mode-header">
+            <h3>Blitz Rush</h3>
+          </div>
+          <div class="result-banner ${isCorrect ? 'win' : 'loss'}">
+            <h4>${isCorrect ? 'Speed win' : 'Too slow'}</h4>
+            <p>${isCorrect ? `You earned ${payout} coins.` : `Correct answer: ${current.choices[current.answer]}`}</p>
+            <button class="primary-btn small" onclick="renderBlitzMode()">Run again</button>
+          </div>
+        </div>
+      `;
+    });
+  });
+}
+
 function renderHome() {
   document.querySelectorAll('.nav-btn').forEach((button) => {
     button.classList.toggle('active', button.dataset.view === 'home');
@@ -934,3 +1332,4 @@ function bootstrap() {
 }
 
 bootstrap();
+
