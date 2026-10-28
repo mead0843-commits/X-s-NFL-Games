@@ -23,7 +23,6 @@
         <nav class="side-nav">
           <button class="nav-btn active" data-view="home">Home</button>
           <button class="nav-btn" data-view="modes">Modes</button>
-          <button class="nav-btn" data-view="team">Ultimate Team</button>
           <button class="nav-btn" data-view="profile">Profile</button>
           <button class="nav-btn" data-view="local">Local Duel</button>
         </nav>
@@ -81,32 +80,27 @@
             <article class="mode-card" data-mode="guess">
               <div class="mode-topline"><span class="dot success"></span> Guess</div>
               <h4>Guess the Player</h4>
-              <p>Use clues and deduction to crack the player in minimal guesses.</p>
-            </article>
-            <article class="mode-card" data-mode="packs">
-              <div class="mode-topline"><span class="dot gold"></span> Team</div>
-              <h4>Ultimate Team</h4>
-              <p>Earn packs and collect player cards to build your roster.</p>
+              <p>Type the player and use clues to crack the answer.</p>
             </article>
             <article class="mode-card" data-mode="stat">
               <div class="mode-topline"><span class="dot info"></span> Stats</div>
               <h4>Stat Attack</h4>
-              <p>Fast stat-leader challenge with quick payouts.</p>
+              <p>Fast stat-leader challenge with varied, harder prompts.</p>
             </article>
             <article class="mode-card" data-mode="draft">
               <div class="mode-topline"><span class="dot gold"></span> Draft</div>
               <h4>Draft Dash</h4>
               <p>Mock draft your best players and stack coins.</p>
             </article>
-            <article class="mode-card" data-mode="pickem">
-              <div class="mode-topline"><span class="dot success"></span> Pick</div>
-              <h4>Pick’em Playoff</h4>
-              <p>Predict winners and chase bracket glory.</p>
+            <article class="mode-card" data-mode="survivor">
+              <div class="mode-topline"><span class="dot success"></span> Survivor</div>
+              <h4>Survivor League</h4>
+              <p>Pick the one team that survives the slate.</p>
             </article>
-            <article class="mode-card" data-mode="blitz">
-              <div class="mode-topline"><span class="dot danger"></span> Rush</div>
-              <h4>Blitz Rush</h4>
-              <p>Fast reaction mode for players who want instant rounds.</p>
+            <article class="mode-card" data-mode="grid">
+              <div class="mode-topline"><span class="dot danger"></span> Grid</div>
+              <h4>Immaculate Grid</h4>
+              <p>Fill the board with all-time names across eras and matchups.</p>
             </article>
           </div>
 
@@ -135,23 +129,6 @@
             <h3>Game Modes</h3>
           </div>
           <div class="mode-list" id="modeList"></div>
-        </section>
-
-        <section id="teamView" class="view">
-          <div class="section-header two-up">
-            <h3>Ultimate Team</h3>
-            <button class="primary-btn small" id="openPackBtn">Open Pack</button>
-          </div>
-
-          <div class="pack-panel">
-            <div class="pack-box" id="packBox">PACK</div>
-            <div class="pack-info">
-              <div class="small-label">Pack Inventory</div>
-              <div class="big-value" id="packInventory">0</div>
-            </div>
-          </div>
-
-          <div class="collection-grid" id="collectionGrid"></div>
         </section>
 
         <section id="profileView" class="view">
