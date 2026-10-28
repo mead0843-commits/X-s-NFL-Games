@@ -32,11 +32,14 @@ const defaultState = {
 
 const state = loadState();
 const seasonPassThresholds = [500, 1100, 1800, 2900, 4300, 6200, 8700, 12000];
+const teamWheel = ['Chiefs', 'Bills', '49ers', 'Eagles', 'Cowboys', 'Patriots', 'Ravens', 'Giants', 'Bengals', 'Dolphins'];
+const eraWheel = ['1980s', '1990s', '2000s', '2010s', '2020s'];
+
 const modeData = [
   {
     id: 'twenty',
     title: '20-0 Challenge',
-    description: 'Win streaks under pressure. Every prediction is a point, and the better you do, the bigger the payout.',
+    description: 'Spin the wheel for a team and era, then load the best players by position to complete a lineup.',
     tag: '20-0'
   },
   {
@@ -65,13 +68,6 @@ const modeData = [
   }
 ];
 
-const twentyRounds = [
-  { prompt: 'Will the Chiefs win their next matchup?', choices: ['Yes', 'No'], correct: 0 },
-  { prompt: 'Will the 49ers score over 24 points?', choices: ['Yes', 'No'], correct: 0 },
-  { prompt: 'Is a running back likely to rush for 100+ yards?', choices: ['Yes', 'No'], correct: 0 },
-  { prompt: 'Will this QB throw at least 2 touchdowns?', choices: ['Yes', 'No'], correct: 1 }
-];
-
 const triviaBank = [
   { question: 'Which QB won Super Bowl LVII?', choices: ['Tom Brady', 'Patrick Mahomes', 'Joe Burrow', 'Josh Allen'], correct: 1, difficulty: 'Pro' },
   { question: 'Who holds the single-season rushing record?', choices: ['Adrian Peterson', 'Eric Dickerson', 'Barry Sanders', 'Saquon Barkley'], correct: 1, difficulty: 'All-Pro' },
@@ -80,14 +76,27 @@ const triviaBank = [
 ];
 
 const playerPool = [
-  { name: 'Patrick Mahomes', position: 'QB', team: 'Chiefs', era: '2020s', college: 'Texas Tech', statRange: '3000+ passing yards', number: 15 },
-  { name: 'Christian McCaffrey', position: 'RB', team: '49ers', era: '2020s', college: 'Stanford', statRange: '1000+ rushing yards', number: 23 },
-  { name: 'JaMarr Chase', position: 'WR', team: 'Bengals', era: '2020s', college: 'LSU', statRange: '1000+ receiving yards', number: 1 },
-  { name: 'Tyreek Hill', position: 'WR', team: 'Dolphins', era: '2020s', college: 'West Alabama', statRange: '1200+ receiving yards', number: 10 },
-  { name: 'Joe Burrow', position: 'QB', team: 'Bengals', era: '2020s', college: 'LSU', statRange: '3500+ passing yards', number: 9 },
-  { name: 'Lawrence Taylor', position: 'LB', team: 'Giants', era: '1980s', college: 'North Carolina', statRange: '15+ sacks', number: 58 },
-  { name: 'Jerry Rice', position: 'WR', team: '49ers', era: '1980s', college: 'Mississippi Valley State', statRange: '1500+ receiving yards', number: 80 },
-  { name: 'Tom Brady', position: 'QB', team: 'Patriots', era: '2000s', college: 'Michigan', statRange: '4000+ passing yards', number: 12 }
+  { name: 'Patrick Mahomes', position: 'QB', team: 'Chiefs', era: '2020s', college: 'Texas Tech', statRange: '3000+ passing yards', rating: 98, number: 15 },
+  { name: 'Joe Burrow', position: 'QB', team: 'Bengals', era: '2020s', college: 'LSU', statRange: '3500+ passing yards', rating: 92, number: 9 },
+  { name: 'Tom Brady', position: 'QB', team: 'Patriots', era: '2000s', college: 'Michigan', statRange: '4000+ passing yards', rating: 96, number: 12 },
+  { name: 'Russell Wilson', position: 'QB', team: 'Bills', era: '2020s', college: 'Wisconsin', statRange: '3500+ passing yards', rating: 89, number: 3 },
+  { name: 'Christian McCaffrey', position: 'RB', team: '49ers', era: '2020s', college: 'Stanford', statRange: '1000+ rushing yards', rating: 96, number: 23 },
+  { name: 'Marshawn Lynch', position: 'RB', team: 'Seahawks', era: '2010s', college: 'California', statRange: '1000+ rushing yards', rating: 90, number: 24 },
+  { name: 'Barry Sanders', position: 'RB', team: 'Lions', era: '1990s', college: 'Oklahoma State', statRange: '1500+ rushing yards', rating: 94, number: 20 },
+  { name: 'Eric Dickerson', position: 'RB', team: 'Rams', era: '1980s', college: 'SMU', statRange: '1500+ rushing yards', rating: 93, number: 33 },
+  { name: 'JaMarr Chase', position: 'WR', team: 'Bengals', era: '2020s', college: 'LSU', statRange: '1000+ receiving yards', rating: 92, number: 1 },
+  { name: 'Tyreek Hill', position: 'WR', team: 'Dolphins', era: '2020s', college: 'West Alabama', statRange: '1200+ receiving yards', rating: 94, number: 10 },
+  { name: 'Jerry Rice', position: 'WR', team: '49ers', era: '1980s', college: 'Mississippi Valley State', statRange: '1500+ receiving yards', rating: 99, number: 80 },
+  { name: 'Steve Smith Sr.', position: 'WR', team: 'Panthers', era: '2000s', college: 'Utah', statRange: '1200+ receiving yards', rating: 90, number: 81 },
+  { name: 'Travis Kelce', position: 'TE', team: 'Chiefs', era: '2020s', college: 'Cincinnati', statRange: '1000+ receiving yards', rating: 94, number: 87 },
+  { name: 'Tony Gonzalez', position: 'TE', team: 'Chiefs', era: '2000s', college: 'California', statRange: '1000+ receiving yards', rating: 90, number: 88 },
+  { name: 'Rob Gronkowski', position: 'TE', team: 'Patriots', era: '2010s', college: 'Arizona', statRange: '900+ receiving yards', rating: 91, number: 87 },
+  { name: 'Lawrence Taylor', position: 'LB', team: 'Giants', era: '1980s', college: 'North Carolina', statRange: '15+ sacks', rating: 98, number: 58 },
+  { name: 'Ray Lewis', position: 'LB', team: 'Ravens', era: '2000s', college: 'Miami', statRange: '150+ tackles', rating: 96, number: 52 },
+  { name: 'Reggie White', position: 'DL', team: 'Eagles', era: '1990s', college: 'Tennessee', statRange: '15+ sacks', rating: 95, number: 92 },
+  { name: 'Myles Garrett', position: 'DL', team: 'Browns', era: '2020s', college: 'Texas A&M', statRange: '10+ sacks', rating: 92, number: 95 },
+  { name: 'Ed Reed', position: 'S', team: 'Ravens', era: '2000s', college: 'Miami', statRange: '8+ INTs', rating: 95, number: 20 },
+  { name: 'Troy Polamalu', position: 'S', team: 'Steelers', era: '2010s', college: 'USC', statRange: '5+ INTs', rating: 92, number: 43 }
 ];
 
 const shopItems = [
@@ -116,6 +125,8 @@ const ui = {
   profileCoins: document.getElementById('profileCoins'),
   bestStreakValue: document.getElementById('bestStreakValue')
 };
+
+let twentyState = null;
 
 function loadState() {
   const raw = localStorage.getItem(STORAGE_KEY);
@@ -267,101 +278,130 @@ function openMode(modeId) {
   }
 }
 
-function renderTwentyMode() {
-  const roundIndex = 0;
-  const quiz = twentyRounds;
-  const intro = `
-    <div class="mode-shell">
-      <div class="mode-header">
-        <h3>20-0 Challenge</h3>
-        <button class="primary-btn small" onclick="startTwentyGame()">Start</button>
-      </div>
-      <div class="game-panel">
-        <div class="prompt-box">
-          <h4>Prediction Challenge</h4>
-          <p>Make the right calls in a row. Win streaks improve your reward and season pass XP.</p>
-        </div>
-      </div>
-    </div>
-  `;
-  ui.gameModeContent.innerHTML = intro;
+function getTwentyChallenge() {
+  const team = teamWheel[Math.floor(Math.random() * teamWheel.length)];
+  const era = eraWheel[Math.floor(Math.random() * eraWheel.length)];
+
+  const positions = ['QB', 'RB', 'WR', 'TE', 'DEF'];
+  const slots = positions.map((position) => {
+    const candidates = playerPool
+      .filter((player) => player.position === position)
+      .filter((player) => player.team === team || player.era === era)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 4);
+
+    const filler = playerPool
+      .filter((player) => player.position === position)
+      .sort((a, b) => b.rating - a.rating)
+      .slice(0, 4);
+
+    const options = candidates.length >= 4 ? candidates : filler;
+
+    return { position, options: options.slice(0, 4) };
+  });
+
+  return { team, era, slots, target: 390 };
 }
 
-function startTwentyGame() {
-  let score = 0;
-  const totalRounds = twentyRounds.length;
-  let current = 0;
+function renderTwentyMode() {
+  twentyState = {
+    challenge: getTwentyChallenge(),
+    selections: {},
+    total: 0
+  };
 
-  const render = () => {
-    const round = twentyRounds[current];
-    if (!round) {
-      const reward = score * 40 + state.streak * 15;
-      state.coins += reward;
-      state.modeWins.twenty += 1;
-      state.streak = Math.max(state.streak, score);
-      state.bestStreak = Math.max(state.bestStreak, score);
-      addXp(150 + score * 25);
-      persistState();
-      updateStats();
-      ui.gameModeContent.innerHTML = `
-        <div class="mode-shell">
-          <div class="mode-header">
-            <h3>20-0 Challenge</h3>
-          </div>
-          <div class="result-banner win">
-            <h4>Challenge Complete</h4>
-            <p>You finished with ${score}/${totalRounds} correct picks and earned ${reward} coins.</p>
-            <button class="primary-btn small" onclick="renderTwentyMode()">Play again</button>
-          </div>
-        </div>
+  renderTwentyBoard();
+}
+
+function renderTwentyBoard() {
+  const challenge = twentyState.challenge;
+  const selectedCount = Object.keys(twentyState.selections).length;
+  const isComplete = selectedCount === challenge.slots.length;
+
+  const slotCards = challenge.slots.map((slot) => {
+    const selected = twentyState.selections[slot.position];
+    const buttons = slot.options.map((player) => {
+      const isSelected = selected && selected.name === player.name;
+      return `
+        <button class="slot-choice ${isSelected ? 'selected' : ''}" data-position="${slot.position}" data-player="${player.name}">
+          ${player.name} (${player.rating})
+        </button>
       `;
-      return;
-    }
+    }).join('');
+
+    return `
+      <div class="slot-card">
+        <div class="slot-head">
+          <span class="slot-label">${slot.position}</span>
+          ${selected ? `<span class="slot-picked">${selected.name}</span>` : '<span class="slot-picked muted">Open</span>'}
+        </div>
+        <div class="slot-options">${buttons}</div>
+      </div>
+    `;
+  }).join('');
+
+  if (isComplete) {
+    const reward = Math.max(90, twentyState.total * 2);
+    state.coins += reward;
+    state.modeWins.twenty += 1;
+    state.streak = Math.max(state.streak + 1, 1);
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    addXp(180 + twentyState.total);
+    persistState();
+    updateStats();
 
     ui.gameModeContent.innerHTML = `
       <div class="mode-shell">
         <div class="mode-header">
           <h3>20-0 Challenge</h3>
-          <span class="score-tag">Round ${current + 1}/${totalRounds}</span>
+          <span class="score-tag">${challenge.team} / ${challenge.era}</span>
         </div>
-        <div class="game-panel">
-          <div class="prompt-box">
-            <h4>${round.prompt}</h4>
-          </div>
-          <div class="answer-grid">
-            ${round.choices.map((choice, index) => `
-              <button class="answer-btn" data-index="${index}" data-round="${current}">${choice}</button>
-            `).join('')}
-          </div>
+        <div class="result-banner win">
+          <h4>Lineup complete</h4>
+          <p>You built a ${challenge.team} ${challenge.era} lineup with ${twentyState.total} total points and earned ${reward} coins.</p>
+          <button class="primary-btn small" onclick="renderTwentyMode()">Spin again</button>
         </div>
       </div>
     `;
+    return;
+  }
 
-    ui.gameModeContent.querySelectorAll('.answer-btn').forEach((button) => {
-      button.addEventListener('click', () => {
-        const userChoice = Number(button.dataset.index);
-        const correct = round.correct === userChoice;
+  ui.gameModeContent.innerHTML = `
+    <div class="mode-shell">
+      <div class="mode-header">
+        <h3>20-0 Challenge</h3>
+        <span class="score-tag">${challenge.team} / ${challenge.era}</span>
+      </div>
+      <div class="game-panel">
+        <div class="prompt-box">
+          <h4>Wheel landed on ${challenge.team} in the ${challenge.era}</h4>
+          <p>Choose the best player for each position to build the lineup and hit the target.</p>
+        </div>
+        <div class="wheel-result">
+          <div class="wheel-badge">${challenge.team}</div>
+          <div class="wheel-badge secondary">${challenge.era}</div>
+        </div>
+        <div class="slot-grid">${slotCards}</div>
+      </div>
+    </div>
+  `;
 
-        if (correct) {
-          score += 1;
-          state.streak += 1;
-          button.classList.add('correct');
-        } else {
-          state.streak = 0;
-          button.classList.add('wrong');
-          const correctButton = ui.gameModeContent.querySelectorAll('.answer-btn')[round.correct];
-          if (correctButton) correctButton.classList.add('correct');
-        }
+  ui.gameModeContent.querySelectorAll('.slot-choice').forEach((button) => {
+    button.addEventListener('click', () => {
+      const playerName = button.dataset.player;
+      const position = button.dataset.position;
+      const player = challenge.slots
+        .find((slot) => slot.position === position)
+        .options.find((candidate) => candidate.name === playerName);
 
-        setTimeout(() => {
-          current += 1;
-          render();
-        }, 450);
-      });
+      if (!player) return;
+
+      twentyState.selections[position] = player;
+      twentyState.total = Object.values(twentyState.selections).reduce((sum, item) => sum + item.rating, 0);
+
+      renderTwentyBoard();
     });
-  };
-
-  render();
+  });
 }
 
 function renderTriviaMode() {
@@ -389,7 +429,6 @@ function renderTriviaMode() {
   ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
     button.addEventListener('click', () => {
       const isCorrect = button.dataset.correct === 'true';
-      const bonus = isCorrect ? 80 : 20;
       if (isCorrect) {
         state.coins += 80;
         state.streak += 1;
@@ -413,7 +452,7 @@ function renderTriviaMode() {
             </div>
             <div class="result-banner ${isCorrect ? 'win' : 'loss'}">
               <h4>${isCorrect ? 'Correct!' : 'Close one.'}</h4>
-              <p>${isCorrect ? `You earned ${bonus} coins.` : 'The answer was revealed above.'}</p>
+              <p>${isCorrect ? 'You earned 80 coins.' : 'The answer was revealed above.'}</p>
               <button class="primary-btn small" onclick="renderTriviaMode()">Try another</button>
             </div>
           </div>
@@ -499,11 +538,6 @@ function renderGuessMode() {
           `;
           return;
         }
-
-        const guessList = [...ui.gameModeContent.querySelectorAll('.guess-btn')].map((el) => {
-          const player = playerPool.find((p) => p.name === el.dataset.name);
-          return player;
-        }).filter((p) => p.name === chosen);
 
         const list = (guessesMade || []).concat(guessedPlayer);
         if (guesses >= maxGuesses) {
@@ -671,36 +705,34 @@ function startLocalDuel() {
 
       button.classList.add(isCorrect ? 'correct' : 'wrong');
 
-      if (scores[1] > 0 || scores[2] > 0) {
-        const done = duoBoxes.every((box) => box.querySelectorAll('.choice-btn').length > 0);
-        if (done && scores[1] + scores[2] > 0) {
-          const winner = scores[1] === scores[2] ? 'Tie' : scores[1] > scores[2] ? 'Player One' : 'Player Two';
-          const reward = winner === 'Tie' ? 75 : 150;
+      const done = choiceButtons.length > 0 && [...choiceButtons].every((el) => el.classList.contains('correct') || el.classList.contains('wrong'));
+      if (done) {
+        const winner = scores[1] === scores[2] ? 'Tie' : scores[1] > scores[2] ? 'Player One' : 'Player Two';
+        const reward = winner === 'Tie' ? 75 : 150;
 
-          if (winner !== 'Tie') {
-            state.coins += reward;
-            state.localWins += 1;
-            state.modeWins.local += 1;
-            state.streak += 1;
-            addXp(120);
-          }
-
-          persistState();
-          updateStats();
-
-          ui.gameModeContent.innerHTML = `
-            <div class="mode-shell">
-              <div class="mode-header">
-                <h3>Local Duel</h3>
-              </div>
-              <div class="result-banner ${winner === 'Tie' ? 'loss' : 'win'}">
-                <h4>${winner === 'Tie' ? 'Draw Game' : `${winner} wins!`}</h4>
-                <p>${winner === 'Tie' ? 'No coins were awarded this time.' : `Reward: ${reward} coins.`}</p>
-                <button class="primary-btn small" onclick="renderLocalMode()">Rematch</button>
-              </div>
-            </div>
-          `;
+        if (winner !== 'Tie') {
+          state.coins += reward;
+          state.localWins += 1;
+          state.modeWins.local += 1;
+          state.streak += 1;
+          addXp(120);
         }
+
+        persistState();
+        updateStats();
+
+        ui.gameModeContent.innerHTML = `
+          <div class="mode-shell">
+            <div class="mode-header">
+              <h3>Local Duel</h3>
+            </div>
+            <div class="result-banner ${winner === 'Tie' ? 'loss' : 'win'}">
+              <h4>${winner === 'Tie' ? 'Draw Game' : `${winner} wins!`}</h4>
+              <p>${winner === 'Tie' ? 'No coins were awarded this time.' : `Reward: ${reward} coins.`}</p>
+              <button class="primary-btn small" onclick="renderLocalMode()">Rematch</button>
+            </div>
+          </div>
+        `;
       }
     });
   });

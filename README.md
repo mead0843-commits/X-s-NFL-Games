@@ -1,7 +1,7 @@
 # X's NFL Games
 
 A local-first football game hub with:
-- 20-0 challenge mode
+- 20-0 challenge mode built around spinning a team/era wheel and selecting players by position
 - trivia mode
 - guess-the-player mode
 - local 2-player couch duel
