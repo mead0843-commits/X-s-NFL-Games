@@ -116,7 +116,7 @@ const triviaBank = [
   { question: 'Who is the all-time leader in NFL rushing yards?', choices: ['Emmitt Smith', 'Walter Payton', 'Barry Sanders', 'Adrian Peterson'], correct: 0, difficulty: 'Hall of Fame' },
   { question: 'Which player was nicknamed “The Refrigerator”?', choices: ['William “The Refrigerator” Perry', 'Bubba Smith', 'Nose tackle Joe Greene', 'Richard Dent'], correct: 0, difficulty: 'Champion' },
   { question: 'Which team won Super Bowl XXXIV?', choices: ['Rams', 'Patriots', 'Saints', 'Bengals'], correct: 0, difficulty: 'Champion' },
-  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Legend' },
+  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Hall of Fame' },
   { question: 'Who was the first overall pick in the 2024 NFL Draft?', choices: ['Caleb Williams', 'Drake Maye', 'Jayden Daniels', 'Marvin Harrison Jr.'], correct: 0, difficulty: 'Champion' },
   { question: 'Which player had the longest touchdown reception in NFL history?', choices: ['Randy Moss', 'Tyreek Hill', 'DeSean Jackson', 'J.J. Nelson'], correct: 1, difficulty: 'Legend' },
   { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Legend' }
@@ -235,7 +235,7 @@ const ui = {
   shopGrid: document.getElementById('shopGrid'),
   localDuelContent: document.getElementById('localDuelContent'),
   gameModeContent: document.getElementById('gameModeContent'),
-  packInventory: document.getElementById('packInventory'),
+  packInventory: document.getElementById('packCount'),
   titleValue: document.getElementById('titleValue'),
   profileCoins: document.getElementById('profileCoins'),
   bestStreakValue: document.getElementById('bestStreakValue')
@@ -298,27 +298,28 @@ function findPlayerByName(query, pool = playerPool) {
 }
 
 function updateStats() {
-  ui.coinCount.textContent = state.coins;
-  ui.streakCount.textContent = state.streak;
-  ui.localWinsCount.textContent = state.localWins;
-  ui.cardCount.textContent = state.collection.length;
-  ui.packCount.textContent = state.packCount;
-  ui.packInventory.textContent = state.packCount;
-  ui.titleValue.textContent = state.profile.title;
-  ui.profileCoins.textContent = state.coins;
-  ui.bestStreakValue.textContent = state.bestStreak;
+  if (ui.coinCount) ui.coinCount.textContent = state.coins;
+  if (ui.streakCount) ui.streakCount.textContent = state.streak;
+  if (ui.localWinsCount) ui.localWinsCount.textContent = state.localWins;
+  if (ui.cardCount) ui.cardCount.textContent = state.collection.length;
+  if (ui.packCount) ui.packCount.textContent = state.packCount;
+  if (ui.packInventory) ui.packInventory.textContent = state.packCount;
+  if (ui.titleValue) ui.titleValue.textContent = state.profile.title;
+  if (ui.profileCoins) ui.profileCoins.textContent = state.coins;
+  if (ui.bestStreakValue) ui.bestStreakValue.textContent = state.bestStreak;
 
   const { tier, progress, nextGoal, xp } = getTierAndProgress();
-  ui.passFill.style.width = `${Math.min(progress, 100)}%`;
-  ui.xpValue.textContent = `${xp} / ${nextGoal} XP`;
-  ui.tierValue.textContent = tier;
+  if (ui.passFill) ui.passFill.style.width = `${Math.min(progress, 100)}%`;
+  if (ui.xpValue) ui.xpValue.textContent = `${xp} / ${nextGoal} XP`;
+  if (ui.tierValue) ui.tierValue.textContent = tier;
 }
 
 function renderModeList() {
+  if (!ui.modeList) return;
   ui.modeList.innerHTML = modeData
     .map((mode) => `
       <article class="mode-tile" data-mode="${mode.id}">
-        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'local' ? 'success' : mode.id === 'stat' ? 'info' : mode.id === 'draft' ? 'gold' : mode.id === 'pickem' ? 'info' : mode.id === 'survivor' ? 'success' : 'danger'}"></span>${mode.tag}</div>
+        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'local' ? 'info' : mode.id === 'stat' ? 'blue' : mode.id === 'draft' ? 'gold' : mode.id === 'survivor' ? 'success' : 'danger'}"></span> ${mode.tag}</div>
         <h4>${mode.title}</h4>
         <p>${mode.description}</p>
       </article>
@@ -331,6 +332,7 @@ function renderModeList() {
 }
 
 function renderCollection() {
+  if (!ui.collectionGrid) return;
   ui.collectionGrid.innerHTML = state.collection
     .map((card) => `
       <div class="card-tile ${card.rarity}">
@@ -347,6 +349,7 @@ function renderCollection() {
 }
 
 function renderShop() {
+  if (!ui.shopGrid) return;
   ui.shopGrid.innerHTML = shopItems
     .map((item) => `
       <div class="shop-item">
@@ -378,8 +381,8 @@ function buyUpgrade(id, cost) {
 }
 
 function renderProfile() {
-  ui.titleValue.textContent = state.profile.title;
-  ui.profileCoins.textContent = state.coins;
+  if (ui.titleValue) ui.titleValue.textContent = state.profile.title;
+  if (ui.profileCoins) ui.profileCoins.textContent = state.coins;
 }
 
 function openMode(modeId) {
@@ -396,24 +399,28 @@ function openMode(modeId) {
     blitz: renderBlitzMode
   };
 
-  if (modeId === 'packs') {
-    document.querySelector('[data-view="team"]').click();
-    return;
+  const screenNames = {
+    twenty: '20-0 Challenge',
+    trivia: 'NFL Trivia',
+    guess: 'Guess the Player',
+    stat: 'Stat Attack',
+    draft: 'Draft Dash',
+    pickem: 'Pick’em Playoff',
+    survivor: 'Survivor League',
+    blitz: 'Blitz Rush',
+    local: 'Local Duel',
+    packs: 'Ultimate Team'
+  };
+
+  if (ui.screenTitle) {
+    ui.screenTitle.textContent = screenNames[modeId] || 'Home';
   }
 
-  document.getElementById('screenTitle').textContent =
-    modeId === 'twenty' ? '20-0 Challenge' :
-    modeId === 'trivia' ? 'NFL Trivia' :
-    modeId === 'guess' ? 'Guess the Player' :
-    modeId === 'stat' ? 'Stat Attack' :
-    modeId === 'draft' ? 'Draft Dash' :
-    modeId === 'pickem' ? 'Pick’em Playoff' :
-    modeId === 'survivor' ? 'Survivor League' :
-    modeId === 'blitz' ? 'Blitz Rush' :
-    'Local Duel';
-
   document.querySelectorAll('.view').forEach((view) => view.classList.remove('active'));
-  document.getElementById('gameModeView').classList.add('active');
+  const gameModeView = document.getElementById('gameModeView');
+  if (gameModeView) {
+    gameModeView.classList.add('active');
+  }
 
   if (noGameMap[modeId]) {
     noGameMap[modeId]();
@@ -470,6 +477,7 @@ function renderTwentyMode() {
     spinning: false
   };
 
+  if (!ui.gameModeContent) return;
   ui.gameModeContent.innerHTML = `
     <div class="mode-shell">
       <div class="mode-header">
@@ -609,6 +617,7 @@ function drawTriviaQuestion() {
 function renderTriviaMode() {
   const trivia = drawTriviaQuestion();
 
+  if (!ui.gameModeContent) return;
   ui.gameModeContent.innerHTML = `
     <div class="mode-shell">
       <div class="mode-header">
@@ -826,6 +835,7 @@ function drawPackRarity(pack) {
 function renderPackMode() {
   const selectedPack = getPackById(selectedPackId);
 
+  if (!ui.gameModeContent) return;
   ui.gameModeContent.innerHTML = `
     <div class="mode-shell">
       <div class="mode-header">
@@ -914,6 +924,7 @@ function openPack(packId = selectedPackId) {
 }
 
 function renderLocalMode() {
+  if (!ui.gameModeContent) return;
   ui.gameModeContent.innerHTML = `
     <div class="mode-shell">
       <div class="mode-header">
@@ -1373,11 +1384,12 @@ function renderHome() {
     button.classList.toggle('active', button.dataset.view === 'home');
   });
 
-  document.getElementById('screenTitle').textContent = 'Home';
+  if (ui.screenTitle) ui.screenTitle.textContent = 'Home';
   document.querySelectorAll('.view').forEach((view) => {
     view.classList.remove('active');
   });
-  document.getElementById('homeView').classList.add('active');
+  const homeView = document.getElementById('homeView');
+  if (homeView) homeView.classList.add('active');
 }
 
 function bindNavigation() {
@@ -1397,8 +1409,9 @@ function bindNavigation() {
 
       const targetId = viewMap[view];
       if (!targetId) return;
-      document.getElementById(targetId).classList.add('active');
-      document.getElementById('screenTitle').textContent = button.textContent;
+      const targetView = document.getElementById(targetId);
+      if (targetView) targetView.classList.add('active');
+      if (ui.screenTitle) ui.screenTitle.textContent = button.textContent;
 
       if (targetId === 'modesView') {
         renderModeList();
@@ -1420,8 +1433,6 @@ function bindNavigation() {
       el.addEventListener('click', () => openMode(el.dataset.mode));
     }
   });
-
-  document.getElementById('openPackBtn').addEventListener('click', () => openPack(selectedPackId));
 }
 
 function bootstrap() {
