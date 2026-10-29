@@ -39,6 +39,23 @@ const state = loadState();
 const seasonPassThresholds = [500, 1100, 1800, 2900, 4300, 6200, 8700, 12000];
 const teamWheel = ['Chiefs', 'Bills', '49ers', 'Eagles', 'Cowboys', 'Patriots', 'Ravens', 'Giants', 'Bengals', 'Dolphins'];
 const eraWheel = ['1980s', '1990s', '2000s', '2010s', '2020s'];
+const wheelPalette = ['#5fa8ff', '#ef5d5d', '#2ad48c', '#f4c542', '#8b5cf6', '#4cc9f0', '#f39c12', '#00c2a8', '#ff7f7f', '#a78bfa'];
+
+const twentyWheelOptions = () => {
+  const options = [];
+  teamWheel.forEach((team) => {
+    eraWheel.forEach((era) => {
+      options.push({ team, era, label: `${team} / ${era}` });
+    });
+  });
+  return options;
+};
+
+function getWheelBackground() {
+  const options = twentyWheelOptions();
+  const slice = 360 / options.length;
+  return `conic-gradient(${options.map((_, index) => `${wheelPalette[index % wheelPalette.length]} ${index * slice}deg ${(index + 1) * slice}deg`).join(', ')})`;
+}
 
 const modeData = [
   {
@@ -116,7 +133,7 @@ const triviaBank = [
   { question: 'Who is the all-time leader in NFL rushing yards?', choices: ['Emmitt Smith', 'Walter Payton', 'Barry Sanders', 'Adrian Peterson'], correct: 0, difficulty: 'Hall of Fame' },
   { question: 'Which player was nicknamed “The Refrigerator”?', choices: ['William “The Refrigerator” Perry', 'Bubba Smith', 'Nose tackle Joe Greene', 'Richard Dent'], correct: 0, difficulty: 'Champion' },
   { question: 'Which team won Super Bowl XXXIV?', choices: ['Rams', 'Patriots', 'Saints', 'Bengals'], correct: 0, difficulty: 'Champion' },
-  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Hall of Fame' },
+  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Champion' },
   { question: 'Who was the first overall pick in the 2024 NFL Draft?', choices: ['Caleb Williams', 'Drake Maye', 'Jayden Daniels', 'Marvin Harrison Jr.'], correct: 0, difficulty: 'Champion' },
   { question: 'Which player had the longest touchdown reception in NFL history?', choices: ['Randy Moss', 'Tyreek Hill', 'DeSean Jackson', 'J.J. Nelson'], correct: 1, difficulty: 'Legend' },
   { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Legend' }
@@ -319,7 +336,7 @@ function renderModeList() {
   ui.modeList.innerHTML = modeData
     .map((mode) => `
       <article class="mode-tile" data-mode="${mode.id}">
-        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'local' ? 'info' : mode.id === 'stat' ? 'blue' : mode.id === 'draft' ? 'gold' : mode.id === 'survivor' ? 'success' : 'danger'}"></span> ${mode.tag}</div>
+        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'local' ? 'purple' : 'info'}"></span> ${mode.tag}</div>
         <h4>${mode.title}</h4>
         <p>${mode.description}</p>
       </article>
@@ -427,13 +444,10 @@ function openMode(modeId) {
   }
 }
 
-function getTwentyChallenge() {
-  const team = teamWheel[Math.floor(Math.random() * teamWheel.length)];
-  const era = eraWheel[Math.floor(Math.random() * eraWheel.length)];
-
+function buildTwentyLineup(team, era) {
   const positions = ['QB', 'RB', 'WR', 'TE', 'LT', 'LG', 'C', 'RG', 'RT', 'EDGE', 'DT', 'LB', 'CB', 'S', 'K', 'P'];
 
-  const lineup = positions.map((position) => {
+  return positions.map((position) => {
     const teamEraPool = playerPool.filter((player) => player.position === position && (player.team === team || player.era === era));
     const fallbackPool = playerPool.filter((player) => player.position === position);
     const uniquePlayers = [...new Map([...teamEraPool, ...fallbackPool].map((player) => [player.name, player])).values()];
@@ -443,8 +457,12 @@ function getTwentyChallenge() {
       options: uniquePlayers.slice(0, 12)
     };
   });
+}
 
-  return { team, era, lineup, target: 390 };
+function getTwentyChallenge(customTeam, customEra) {
+  const team = customTeam || teamWheel[Math.floor(Math.random() * teamWheel.length)];
+  const era = customEra || eraWheel[Math.floor(Math.random() * eraWheel.length)];
+  return { team, era, lineup: buildTwentyLineup(team, era), target: 390 };
 }
 
 function handleTwentySelection(position, chosenName) {
@@ -469,12 +487,55 @@ function handleTwentySelection(position, chosenName) {
   renderTwentyBoard();
 }
 
+function parseRosterInput(rawText) {
+  return String(rawText ?? '')
+    .split(/\n|,/) 
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => line.replace(/^(QB|RB|WR|TE|LT|LG|C|RG|RT|EDGE|DT|LB|CB|S|K|P)\s*[:\-]?\s*/i, '').trim())
+    .filter(Boolean);
+}
+
+function scoreRosterFromText(rawText, challenge) {
+  const rosterNames = parseRosterInput(rawText);
+  const pool = challenge ? playerPool.filter((player) => player.team === challenge.team || player.era === challenge.era) : playerPool;
+
+  return rosterNames.reduce((total, name) => {
+    const match = findPlayerByName(name, pool);
+    return total + (match ? match.rating : 0);
+  }, 0);
+}
+
+function compareTwentyRosters() {
+  if (!twentyState || !twentyState.challenge || !ui.gameModeContent) return;
+
+  const rosterFields = ui.gameModeContent.querySelectorAll('.roster-text');
+  const values = {};
+  rosterFields.forEach((field) => {
+    values[field.dataset.roster] = field.value;
+  });
+
+  const playerOneScore = scoreRosterFromText(values.playerOne || '', twentyState.challenge);
+  const playerTwoScore = scoreRosterFromText(values.playerTwo || '', twentyState.challenge);
+  const scoreboard = document.getElementById('rosterScoreboard');
+
+  if (scoreboard) {
+    const winner = playerOneScore === playerTwoScore ? 'Tie game' : playerOneScore > playerTwoScore ? 'Player 1 wins' : 'Player 2 wins';
+    scoreboard.innerHTML = `
+      <strong>Player 1: ${playerOneScore}</strong>
+      <strong>Player 2: ${playerTwoScore}</strong>
+      <span>${winner}</span>
+    `;
+  }
+}
+
 function renderTwentyMode() {
   twentyState = {
     challenge: null,
     selections: {},
     total: 0,
-    spinning: false
+    spinning: false,
+    rosters: { playerOne: '', playerTwo: '' }
   };
 
   if (!ui.gameModeContent) return;
@@ -485,32 +546,45 @@ function renderTwentyMode() {
         <span class="score-tag">Ready</span>
       </div>
       <div class="game-panel">
-        <div class="wheel-panel">
-          <button type="button" class="wheel-button" id="twentySpinBtn" aria-label="Spin the team wheel">
-            <span class="wheel-core">SPIN</span>
-          </button>
-        </div>
-        <div class="prompt-box center">
-          <h4>Spin for the team and era</h4>
-          <p>Type a player for every position below and try to surpass the target score.</p>
+        <div class="wheel-stage">
+          <div class="wheel-frame">
+            <div class="wheel-pointer"></div>
+            <div class="twenty-wheel" id="twentyWheel" style="background: ${getWheelBackground()};"></div>
+            <div class="wheel-center">SPIN</div>
+          </div>
+          <div class="wheel-copy">
+            <h4>Spin for a team and era</h4>
+            <p>After the wheel lands, fill out both rosters and compare totals to decide who wins the challenge.</p>
+            <button type="button" class="primary-btn" id="twentySpinBtn">Spin Wheel</button>
+          </div>
         </div>
       </div>
     </div>
   `;
 
   document.getElementById('twentySpinBtn').addEventListener('click', () => {
+    const wheel = document.getElementById('twentyWheel');
+    const wheelOptions = twentyWheelOptions();
+    const slice = 360 / wheelOptions.length;
+    const selectedIndex = Math.floor(Math.random() * wheelOptions.length);
+    const chosen = wheelOptions[selectedIndex];
+    const totalTurns = 7;
+    const rotationBase = totalTurns * 360;
+    const pointerOffset = 360 - (selectedIndex * slice + slice / 2);
+    const finalRotation = rotationBase + pointerOffset;
+
     twentyState.spinning = true;
-    const spinButton = document.getElementById('twentySpinBtn');
-    spinButton.classList.add('spinning');
+    wheel.style.transition = 'transform 3s cubic-bezier(0.15, 0.8, 0.2, 1)';
+    wheel.style.transform = `rotate(${finalRotation}deg)`;
 
     setTimeout(() => {
       twentyState.spinning = false;
-      twentyState.challenge = getTwentyChallenge();
+      twentyState.challenge = getTwentyChallenge(chosen.team, chosen.era);
       twentyState.selections = {};
       twentyState.total = 0;
-      spinButton.classList.remove('spinning');
+      twentyState.rosters = { playerOne: '', playerTwo: '' };
       renderTwentyBoard();
-    }, 900);
+    }, 2700);
   });
 }
 
@@ -598,6 +672,24 @@ function renderTwentyBoard() {
           <div class="wheel-badge secondary">${challenge.era}</div>
         </div>
         <div class="slot-grid">${slotCards}</div>
+        <div class="roster-battle">
+          <div class="roster-column">
+            <div class="roster-title">Player 1 roster</div>
+            <textarea class="roster-text" data-roster="playerOne" placeholder="QB: Patrick Mahomes\nRB: Christian McCaffrey\nWR: JaMarr Chase\nTE: Travis Kelce">${twentyState.rosters?.playerOne || ''}</textarea>
+          </div>
+          <div class="roster-column">
+            <div class="roster-title">Player 2 roster</div>
+            <textarea class="roster-text" data-roster="playerTwo" placeholder="QB: Joe Burrow\nRB: Derrick Henry\nWR: Tyreek Hill\nTE: George Kittle">${twentyState.rosters?.playerTwo || ''}</textarea>
+          </div>
+        </div>
+        <div class="battle-actions">
+          <button type="button" class="primary-btn small" id="compareRosterBtn">Compare rosters</button>
+        </div>
+        <div class="roster-scoreboard" id="rosterScoreboard">
+          <strong>Player 1: 0</strong>
+          <strong>Player 2: 0</strong>
+          <span>Awaiting both rosters</span>
+        </div>
       </div>
     </div>
   `;
@@ -607,6 +699,18 @@ function renderTwentyBoard() {
       handleTwentySelection(input.dataset.position, input.value);
     });
   });
+
+  ui.gameModeContent.querySelectorAll('.roster-text').forEach((textarea) => {
+    textarea.addEventListener('input', (event) => {
+      const key = event.target.dataset.roster;
+      twentyState.rosters[key] = event.target.value;
+    });
+  });
+
+  const compareButton = document.getElementById('compareRosterBtn');
+  if (compareButton) {
+    compareButton.addEventListener('click', compareTwentyRosters);
+  }
 }
 
 function drawTriviaQuestion() {
