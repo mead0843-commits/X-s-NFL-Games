@@ -77,46 +77,10 @@ const modeData = [
     tag: 'Clue'
   },
   {
-    id: 'packs',
-    title: 'Ultimate Team',
-    description: 'Spend coins on packs, collect players, and build your dream roster.',
-    tag: 'Cards'
-  },
-  {
-    id: 'local',
-    title: 'Local Duel',
-    description: 'Head-to-head couch challenge: no internet needed, just bragging rights and coins.',
-    tag: '2P'
-  },
-  {
     id: 'stat',
     title: 'Stat Attack',
     description: 'Pick the correct stat leader in a fast, knowledge-heavy challenge.',
     tag: 'Stats'
-  },
-  {
-    id: 'draft',
-    title: 'Draft Dash',
-    description: 'Build a mock draft board with smart picks, positional needs, and coin rewards.',
-    tag: 'Draft'
-  },
-  {
-    id: 'pickem',
-    title: 'Pick’em Playoff',
-    description: 'Predict winners across playoff rounds and chase the payout.',
-    tag: 'Pick'
-  },
-  {
-    id: 'survivor',
-    title: 'Survivor League',
-    description: 'Pick one team each slate and survive without getting eliminated.',
-    tag: 'Survive'
-  },
-  {
-    id: 'blitz',
-    title: 'Blitz Rush',
-    description: 'Fast reaction mode: answer instant football prompts under pressure.',
-    tag: 'Rush'
   }
 ];
 
@@ -133,10 +97,10 @@ const triviaBank = [
   { question: 'Who is the all-time leader in NFL rushing yards?', choices: ['Emmitt Smith', 'Walter Payton', 'Barry Sanders', 'Adrian Peterson'], correct: 0, difficulty: 'Hall of Fame' },
   { question: 'Which player was nicknamed “The Refrigerator”?', choices: ['William “The Refrigerator” Perry', 'Bubba Smith', 'Nose tackle Joe Greene', 'Richard Dent'], correct: 0, difficulty: 'Champion' },
   { question: 'Which team won Super Bowl XXXIV?', choices: ['Rams', 'Patriots', 'Saints', 'Bengals'], correct: 0, difficulty: 'Champion' },
-  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Champion' },
+  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Hall of Fame' },
   { question: 'Who was the first overall pick in the 2024 NFL Draft?', choices: ['Caleb Williams', 'Drake Maye', 'Jayden Daniels', 'Marvin Harrison Jr.'], correct: 0, difficulty: 'Champion' },
   { question: 'Which player had the longest touchdown reception in NFL history?', choices: ['Randy Moss', 'Tyreek Hill', 'DeSean Jackson', 'J.J. Nelson'], correct: 1, difficulty: 'Legend' },
-  { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Legend' }
+  { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Champion' }
 ];
 
 const playerPool = [
@@ -336,7 +300,7 @@ function renderModeList() {
   ui.modeList.innerHTML = modeData
     .map((mode) => `
       <article class="mode-tile" data-mode="${mode.id}">
-        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'local' ? 'purple' : 'info'}"></span> ${mode.tag}</div>
+        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : 'gold'}"></span> ${mode.tag}</div>
         <h4>${mode.title}</h4>
         <p>${mode.description}</p>
       </article>
@@ -407,26 +371,14 @@ function openMode(modeId) {
     twenty: renderTwentyMode,
     trivia: renderTriviaMode,
     guess: renderGuessMode,
-    packs: renderPackMode,
-    local: renderLocalMode,
-    stat: renderStatAttackMode,
-    draft: renderDraftDashMode,
-    pickem: renderPickemMode,
-    survivor: renderSurvivorMode,
-    blitz: renderBlitzMode
+    stat: renderStatAttackMode
   };
 
   const screenNames = {
     twenty: '20-0 Challenge',
     trivia: 'NFL Trivia',
     guess: 'Guess the Player',
-    stat: 'Stat Attack',
-    draft: 'Draft Dash',
-    pickem: 'Pick’em Playoff',
-    survivor: 'Survivor League',
-    blitz: 'Blitz Rush',
-    local: 'Local Duel',
-    packs: 'Ultimate Team'
+    stat: 'Stat Attack'
   };
 
   if (ui.screenTitle) {
@@ -506,6 +458,15 @@ function scoreRosterFromText(rawText, challenge) {
   }, 0);
 }
 
+function addTwentyRoster() {
+  if (!twentyState) return;
+  const nextIndex = twentyState.rosterOrder.length + 1;
+  const key = `player${nextIndex}`;
+  twentyState.rosterOrder.push(key);
+  twentyState.rosters[key] = '';
+  renderTwentyBoard();
+}
+
 function compareTwentyRosters() {
   if (!twentyState || !twentyState.challenge || !ui.gameModeContent) return;
 
@@ -515,16 +476,19 @@ function compareTwentyRosters() {
     values[field.dataset.roster] = field.value;
   });
 
-  const playerOneScore = scoreRosterFromText(values.playerOne || '', twentyState.challenge);
-  const playerTwoScore = scoreRosterFromText(values.playerTwo || '', twentyState.challenge);
+  const scoreEntries = twentyState.rosterOrder.map((rosterKey) => ({
+    key: rosterKey,
+    value: scoreRosterFromText(values[rosterKey] || '', twentyState.challenge),
+    label: rosterKey === 'playerOne' ? 'Player 1' : rosterKey === 'playerTwo' ? 'Player 2' : `Player ${rosterKey.replace('player', '')}`
+  }));
+
   const scoreboard = document.getElementById('rosterScoreboard');
 
   if (scoreboard) {
-    const winner = playerOneScore === playerTwoScore ? 'Tie game' : playerOneScore > playerTwoScore ? 'Player 1 wins' : 'Player 2 wins';
+    const winner = scoreEntries.length > 1 ? scoreEntries.reduce((best, entry) => entry.value > best.value ? entry : best, scoreEntries[0]) : scoreEntries[0];
     scoreboard.innerHTML = `
-      <strong>Player 1: ${playerOneScore}</strong>
-      <strong>Player 2: ${playerTwoScore}</strong>
-      <span>${winner}</span>
+      ${scoreEntries.map((entry) => `<strong>${entry.label}: ${entry.value}</strong>`).join('')}
+      <span>${scoreEntries.length > 1 ? `${winner.label} leads` : `${winner.label}: ${winner.value}`}</span>
     `;
   }
 }
@@ -535,7 +499,8 @@ function renderTwentyMode() {
     selections: {},
     total: 0,
     spinning: false,
-    rosters: { playerOne: '', playerTwo: '' }
+    rosters: { playerOne: '', playerTwo: '' },
+    rosterOrder: ['playerOne', 'playerTwo']
   };
 
   if (!ui.gameModeContent) return;
@@ -554,7 +519,7 @@ function renderTwentyMode() {
           </div>
           <div class="wheel-copy">
             <h4>Spin for a team and era</h4>
-            <p>After the wheel lands, fill out both rosters and compare totals to decide who wins the challenge.</p>
+            <p>After the wheel lands, fill out your lineup and compare roster totals. Click the spin button multiple times to keep rolling for fresh matchups.</p>
             <button type="button" class="primary-btn" id="twentySpinBtn">Spin Wheel</button>
           </div>
         </div>
@@ -568,7 +533,7 @@ function renderTwentyMode() {
     const slice = 360 / wheelOptions.length;
     const selectedIndex = Math.floor(Math.random() * wheelOptions.length);
     const chosen = wheelOptions[selectedIndex];
-    const totalTurns = 7;
+    const totalTurns = 7 + Math.floor(Math.random() * 5);
     const rotationBase = totalTurns * 360;
     const pointerOffset = 360 - (selectedIndex * slice + slice / 2);
     const finalRotation = rotationBase + pointerOffset;
@@ -583,6 +548,7 @@ function renderTwentyMode() {
       twentyState.selections = {};
       twentyState.total = 0;
       twentyState.rosters = { playerOne: '', playerTwo: '' };
+      twentyState.rosterOrder = ['playerOne', 'playerTwo'];
       renderTwentyBoard();
     }, 2700);
   });
@@ -656,6 +622,16 @@ function renderTwentyBoard() {
     return;
   }
 
+  const rosterColumns = twentyState.rosterOrder.map((rosterKey) => {
+    const label = rosterKey === 'playerOne' ? 'Player 1 roster' : rosterKey === 'playerTwo' ? 'Player 2 roster' : `Player ${rosterKey.replace('player', '')} roster`;
+    return `
+      <div class="roster-column">
+        <div class="roster-title">${label}</div>
+        <textarea class="roster-text" data-roster="${rosterKey}" placeholder="QB: Patrick Mahomes\nRB: Christian McCaffrey\nWR: JaMarr Chase\nTE: Travis Kelce">${twentyState.rosters?.[rosterKey] || ''}</textarea>
+      </div>
+    `;
+  }).join('');
+
   ui.gameModeContent.innerHTML = `
     <div class="mode-shell">
       <div class="mode-header">
@@ -673,17 +649,11 @@ function renderTwentyBoard() {
         </div>
         <div class="slot-grid">${slotCards}</div>
         <div class="roster-battle">
-          <div class="roster-column">
-            <div class="roster-title">Player 1 roster</div>
-            <textarea class="roster-text" data-roster="playerOne" placeholder="QB: Patrick Mahomes\nRB: Christian McCaffrey\nWR: JaMarr Chase\nTE: Travis Kelce">${twentyState.rosters?.playerOne || ''}</textarea>
-          </div>
-          <div class="roster-column">
-            <div class="roster-title">Player 2 roster</div>
-            <textarea class="roster-text" data-roster="playerTwo" placeholder="QB: Joe Burrow\nRB: Derrick Henry\nWR: Tyreek Hill\nTE: George Kittle">${twentyState.rosters?.playerTwo || ''}</textarea>
-          </div>
+          ${rosterColumns}
         </div>
         <div class="battle-actions">
           <button type="button" class="primary-btn small" id="compareRosterBtn">Compare rosters</button>
+          <button type="button" class="secondary-btn small" id="addRosterBtn">Add roster</button>
         </div>
         <div class="roster-scoreboard" id="rosterScoreboard">
           <strong>Player 1: 0</strong>
@@ -710,6 +680,11 @@ function renderTwentyBoard() {
   const compareButton = document.getElementById('compareRosterBtn');
   if (compareButton) {
     compareButton.addEventListener('click', compareTwentyRosters);
+  }
+
+  const addRosterButton = document.getElementById('addRosterBtn');
+  if (addRosterButton) {
+    addRosterButton.addEventListener('click', addTwentyRoster);
   }
 }
 
@@ -1027,112 +1002,6 @@ function openPack(packId = selectedPackId) {
   `;
 }
 
-function renderLocalMode() {
-  if (!ui.gameModeContent) return;
-  ui.gameModeContent.innerHTML = `
-    <div class="mode-shell">
-      <div class="mode-header">
-        <h3>Local Duel</h3>
-        <button class="primary-btn small" onclick="startLocalDuel()">Start Match</button>
-      </div>
-      <div class="game-panel">
-        <div class="prompt-box">
-          <h4>Two-player couch mode</h4>
-          <p>Each player answers the same prompt on the same device. Highest score wins.</p>
-        </div>
-      </div>
-    </div>
-  `;
-}
-
-function startLocalDuel() {
-  const duelQuestion = {
-    prompt: 'Who had more receiving yards in the 2023 season?',
-    choices: ['JaMarr Chase', 'Tyreek Hill', 'Stefon Diggs', 'A.J. Brown'],
-    answer: 1
-  };
-
-  ui.gameModeContent.innerHTML = `
-    <div class="mode-shell">
-      <div class="mode-header">
-        <h3>Local Duel</h3>
-      </div>
-      <div class="duel-grid">
-        <div class="duel-box">
-          <h4>Player One</h4>
-          <div class="score-tag">Score: 0</div>
-          <div class="prompt-box">
-            <h4>${duelQuestion.prompt}</h4>
-          </div>
-          <div class="answer-grid">
-            ${duelQuestion.choices.map((choice, index) => `<button class="choice-btn" data-player="1" data-choice="${index}">${choice}</button>`).join('')}
-          </div>
-        </div>
-        <div class="duel-box">
-          <h4>Player Two</h4>
-          <div class="score-tag">Score: 0</div>
-          <div class="prompt-box">
-            <h4>${duelQuestion.prompt}</h4>
-          </div>
-          <div class="answer-grid">
-            ${duelQuestion.choices.map((choice, index) => `<button class="choice-btn" data-player="2" data-choice="${index}">${choice}</button>`).join('')}
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  let scores = { 1: 0, 2: 0 };
-  const duoBoxes = [...ui.gameModeContent.querySelectorAll('.duel-box')];
-  const choiceButtons = ui.gameModeContent.querySelectorAll('.choice-btn');
-
-  choiceButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const player = Number(button.dataset.player);
-      const choice = Number(button.dataset.choice);
-      const isCorrect = choice === duelQuestion.answer;
-      if (isCorrect) {
-        scores[player] += 1;
-      }
-
-      const scoreTag = duoBoxes[player - 1].querySelector('.score-tag');
-      scoreTag.textContent = `Score: ${scores[player]}`;
-
-      button.classList.add(isCorrect ? 'correct' : 'wrong');
-
-      const done = choiceButtons.length > 0 && [...choiceButtons].every((el) => el.classList.contains('correct') || el.classList.contains('wrong'));
-      if (done) {
-        const winner = scores[1] === scores[2] ? 'Tie' : scores[1] > scores[2] ? 'Player One' : 'Player Two';
-        const reward = winner === 'Tie' ? 75 : 150;
-
-        if (winner !== 'Tie') {
-          state.coins += reward;
-          state.localWins += 1;
-          state.modeWins.local += 1;
-          state.streak += 1;
-          addXp(120);
-        }
-
-        persistState();
-        updateStats();
-
-        ui.gameModeContent.innerHTML = `
-          <div class="mode-shell">
-            <div class="mode-header">
-              <h3>Local Duel</h3>
-            </div>
-            <div class="result-banner ${winner === 'Tie' ? 'loss' : 'win'}">
-              <h4>${winner === 'Tie' ? 'Draw Game' : `${winner} wins!`}</h4>
-              <p>${winner === 'Tie' ? 'No coins were awarded this time.' : `Reward: ${reward} coins.`}</p>
-              <button class="primary-btn small" onclick="renderLocalMode()">Rematch</button>
-            </div>
-          </div>
-        `;
-      }
-    });
-  });
-}
-
 function renderStatAttackMode() {
   const prompts = [
     {
@@ -1226,263 +1095,6 @@ function renderStatAttackMode() {
   });
 }
 
-function renderDraftDashMode() {
-  const positions = [
-    { slot: 'QB', players: ['Patrick Mahomes', 'Joe Burrow', 'Josh Allen'] },
-    { slot: 'RB', players: ['Christian McCaffrey', 'Derrick Henry', 'Bijan Robinson'] },
-    { slot: 'WR', players: ['JaMarr Chase', 'Tyreek Hill', 'Mike Evans'] },
-    { slot: 'TE', players: ['Travis Kelce', 'George Kittle', 'Sam LaPorta'] }
-  ];
-
-  const picks = positions.map((item) => ({
-    ...item,
-    selected: item.players[Math.floor(Math.random() * item.players.length)]
-  }));
-
-  ui.gameModeContent.innerHTML = `
-    <div class="mode-shell">
-      <div class="mode-header">
-        <h3>Draft Dash</h3>
-        <span class="score-tag">Pick 3</span>
-      </div>
-      <div class="game-panel">
-        <div class="prompt-box">
-          <h4>Build the best 3-player draft board</h4>
-        </div>
-        <div class="answer-grid">
-          ${picks.map((pick) => `
-            <button class="choice-btn" data-slot="${pick.slot}" data-pick="${pick.selected}">
-              ${pick.slot}: ${pick.selected}
-            </button>
-          `).join('')}
-        </div>
-      </div>
-    </div>
-  `;
-
-  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      const slot = button.dataset.slot;
-      const selection = button.dataset.pick;
-      const reward = 160;
-
-      state.coins += reward;
-      state.modeWins.draft += 1;
-      addXp(140);
-      persistState();
-      updateStats();
-
-      ui.gameModeContent.innerHTML = `
-        <div class="mode-shell">
-          <div class="mode-header">
-            <h3>Draft Dash</h3>
-          </div>
-          <div class="result-banner win">
-            <h4>Draft board locked</h4>
-            <p>You drafted ${selection} at ${slot} and earned ${reward} coins.</p>
-            <button class="primary-btn small" onclick="renderDraftDashMode()">Try again</button>
-          </div>
-        </div>
-      `;
-    });
-  });
-}
-
-function renderPickemMode() {
-  const rounds = [
-    {
-      round: 'Wild Card',
-      picks: [
-        { team: 'Chiefs', winner: true },
-        { team: 'Bills', winner: true },
-        { team: 'Eagles', winner: true },
-        { team: 'Ravens', winner: false }
-      ]
-    },
-    {
-      round: 'Divisional',
-      picks: [
-        { team: '49ers', winner: true },
-        { team: 'Cowboys', winner: true },
-        { team: 'Bengals', winner: false },
-        { team: 'Ravens', winner: true }
-      ]
-    }
-  ];
-
-  const current = rounds[Math.floor(Math.random() * rounds.length)];
-
-  ui.gameModeContent.innerHTML = `
-    <div class="mode-shell">
-      <div class="mode-header">
-        <h3>Pick’em Playoff</h3>
-        <span class="score-tag">${current.round}</span>
-      </div>
-      <div class="game-panel">
-        <div class="prompt-box">
-          <h4>Pick the teams you think will win</h4>
-        </div>
-        <div class="answer-grid">
-          ${current.picks.map((pick) => `
-            <button class="choice-btn" data-team="${pick.team}" data-win="${pick.winner}">
-              ${pick.team}
-            </button>
-          `).join('')}
-        </div>
-      </div>
-    </div>
-  `;
-
-  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      const isRight = button.dataset.win === 'true';
-      const reward = isRight ? 180 : 80;
-
-      if (isRight) {
-        state.coins += reward;
-        state.modeWins.pickem += 1;
-        addXp(150);
-      } else {
-        state.streak = 0;
-        addXp(20);
-      }
-
-      persistState();
-      updateStats();
-
-      ui.gameModeContent.innerHTML = `
-        <div class="mode-shell">
-          <div class="mode-header">
-            <h3>Pick’em Playoff</h3>
-          </div>
-          <div class="result-banner ${isRight ? 'win' : 'loss'}">
-            <h4>${isRight ? 'Correct pick' : 'Bad break'}</h4>
-            <p>${isRight ? `You won ${reward} coins.` : 'The correct pick was based on the matchup.'}</p>
-            <button class="primary-btn small" onclick="renderPickemMode()">Play again</button>
-          </div>
-        </div>
-      `;
-    });
-  });
-}
-
-function renderSurvivorMode() {
-  const teams = ['Chiefs', 'Bills', '49ers', 'Eagles', 'Ravens', 'Bengals', 'Cowboys', 'Dolphins'];
-  const pick = teams[Math.floor(Math.random() * teams.length)];
-  const reward = 200;
-
-  ui.gameModeContent.innerHTML = `
-    <div class="mode-shell">
-      <div class="mode-header">
-        <h3>Survivor League</h3>
-        <span class="score-tag">One team only</span>
-      </div>
-      <div class="game-panel">
-        <div class="prompt-box">
-          <h4>Choose one team to survive the week</h4>
-          <p>Pick the team you believe will win this slate.</p>
-        </div>
-        <div class="answer-grid">
-          ${teams.map((team) => `
-            <button class="choice-btn" data-team="${team}">${team}</button>
-          `).join('')}
-        </div>
-      </div>
-    </div>
-  `;
-
-  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      const chosen = button.dataset.team;
-      const survived = chosen === pick;
-
-      state.coins += survived ? reward : 50;
-      state.modeWins.survivor += 1;
-      addXp(survived ? 180 : 60);
-      state.streak = survived ? state.streak + 1 : 0;
-
-      persistState();
-      updateStats();
-
-      ui.gameModeContent.innerHTML = `
-        <div class="mode-shell">
-          <div class="mode-header">
-            <h3>Survivor League</h3>
-          </div>
-          <div class="result-banner ${survived ? 'win' : 'loss'}">
-            <h4>${survived ? 'Survived' : 'Eliminated'}</h4>
-            <p>${survived ? `You picked the right team and won ${reward} coins.` : 'Your team was the wrong call.'}</p>
-            <button class="primary-btn small" onclick="renderSurvivorMode()">Try again</button>
-          </div>
-        </div>
-      `;
-    });
-  });
-}
-
-function renderBlitzMode() {
-  const cards = [
-    { prompt: 'Who has the most career passing TDs?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], answer: 0 },
-    { prompt: 'Who rushed for 1,000 yards in 2023?', choices: ['Christian McCaffrey', 'Derrick Henry', 'Bijan Robinson', 'Saquon Barkley'], answer: 0 },
-    { prompt: 'Who won Super Bowl LVIII?', choices: ['Chiefs', '49ers', 'Eagles', 'Ravens'], answer: 0 },
-    { prompt: 'Who had the most receiving yards in 2023?', choices: ['JaMarr Chase', 'Tyreek Hill', 'Stefon Diggs', 'Mike Evans'], answer: 0 }
-  ];
-
-  const current = cards[Math.floor(Math.random() * cards.length)];
-
-  ui.gameModeContent.innerHTML = `
-    <div class="mode-shell">
-      <div class="mode-header">
-        <h3>Blitz Rush</h3>
-        <span class="score-tag">10-second rounds</span>
-      </div>
-      <div class="game-panel">
-        <div class="prompt-box">
-          <h4>${current.prompt}</h4>
-        </div>
-        <div class="answer-grid">
-          ${current.choices.map((choice, index) => `
-            <button class="choice-btn" data-answer="${index}">${choice}</button>
-          `).join('')}
-        </div>
-      </div>
-    </div>
-  `;
-
-  ui.gameModeContent.querySelectorAll('.choice-btn').forEach((button) => {
-    button.addEventListener('click', () => {
-      const selected = Number(button.dataset.answer);
-      const isCorrect = selected === current.answer;
-      const payout = isCorrect ? 220 : 60;
-
-      if (isCorrect) {
-        state.coins += payout;
-        state.modeWins.blitz += 1;
-        addXp(180);
-      } else {
-        state.streak = 0;
-        addXp(20);
-      }
-
-      persistState();
-      updateStats();
-
-      ui.gameModeContent.innerHTML = `
-        <div class="mode-shell">
-          <div class="mode-header">
-            <h3>Blitz Rush</h3>
-          </div>
-          <div class="result-banner ${isCorrect ? 'win' : 'loss'}">
-            <h4>${isCorrect ? 'Speed win' : 'Too slow'}</h4>
-            <p>${isCorrect ? `You earned ${payout} coins.` : `Correct answer: ${current.choices[current.answer]}`}</p>
-            <button class="primary-btn small" onclick="renderBlitzMode()">Run again</button>
-          </div>
-        </div>
-      `;
-    });
-  });
-}
-
 function renderHome() {
   const homeButtons = document.querySelectorAll('.nav-btn');
   homeButtons.forEach((button) => {
@@ -1544,7 +1156,6 @@ function bootstrap() {
   renderModeList();
   renderCollection();
   renderShop();
-  renderLocalMode();
   bindNavigation();
   updateStats();
   renderHome();
