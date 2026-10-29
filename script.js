@@ -114,12 +114,12 @@ const triviaBank = [
   { question: 'Which receiver recorded 1,964 receiving yards in a single season?', choices: ['Calvin Johnson', 'Julio Jones', 'Andre Johnson', 'Stefon Diggs'], correct: 0, difficulty: 'Legend' },
   { question: 'Which franchise has the most Super Bowl titles in NFL history?', choices: ['Cowboys', 'Steelers', 'Patriots', '49ers'], correct: 2, difficulty: 'Legend' },
   { question: 'Who is the all-time leader in NFL rushing yards?', choices: ['Emmitt Smith', 'Walter Payton', 'Barry Sanders', 'Adrian Peterson'], correct: 0, difficulty: 'Hall of Fame' },
-  { question: 'Which player was nicknamed “The Refrigerator”?', choices: ['William “The Refrigerator” Perry', 'Bubba Smith', 'Nose tackle Joe Greene', 'Richard Dent'], correct: 0, difficulty: 'Legend' },
+  { question: 'Which player was nicknamed “The Refrigerator”?', choices: ['William “The Refrigerator” Perry', 'Bubba Smith', 'Nose tackle Joe Greene', 'Richard Dent'], correct: 0, difficulty: 'Champion' },
   { question: 'Which team won Super Bowl XXXIV?', choices: ['Rams', 'Patriots', 'Saints', 'Bengals'], correct: 0, difficulty: 'Champion' },
-  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Hall of Fame' },
+  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Legend' },
   { question: 'Who was the first overall pick in the 2024 NFL Draft?', choices: ['Caleb Williams', 'Drake Maye', 'Jayden Daniels', 'Marvin Harrison Jr.'], correct: 0, difficulty: 'Champion' },
   { question: 'Which player had the longest touchdown reception in NFL history?', choices: ['Randy Moss', 'Tyreek Hill', 'DeSean Jackson', 'J.J. Nelson'], correct: 1, difficulty: 'Legend' },
-  { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Champion' }
+  { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Legend' }
 ];
 
 const playerPool = [
@@ -306,7 +306,7 @@ function renderModeList() {
   ui.modeList.innerHTML = modeData
     .map((mode) => `
       <article class="mode-tile" data-mode="${mode.id}">
-        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'local' ? 'purple' : mode.id === 'stat' ? 'cyan' : mode.id === 'draft' ? 'orange' : mode.id === 'pickem' ? 'info' : mode.id === 'survivor' ? 'green' : 'gold'}"></span> ${mode.tag}</div>
+        <div class="mode-topline"><span class="dot ${mode.id === 'twenty' ? 'danger' : mode.id === 'trivia' ? 'info' : mode.id === 'guess' ? 'success' : mode.id === 'packs' ? 'gold' : mode.id === 'local' ? 'success' : mode.id === 'stat' ? 'info' : mode.id === 'draft' ? 'gold' : mode.id === 'pickem' ? 'info' : mode.id === 'survivor' ? 'success' : 'danger'}"></span>${mode.tag}</div>
         <h4>${mode.title}</h4>
         <p>${mode.description}</p>
       </article>
@@ -428,6 +428,28 @@ function getTwentyChallenge() {
   return { team, era, lineup, target: 390 };
 }
 
+function handleTwentySelection(position, chosenName) {
+  if (!twentyState || !twentyState.challenge) return;
+
+  const chosenSlot = twentyState.challenge.lineup.find((slot) => slot.position === position);
+  if (!chosenSlot) return;
+
+  const trimmedName = chosenName.trim();
+  if (!trimmedName) {
+    delete twentyState.selections[position];
+    twentyState.total = Object.values(twentyState.selections).reduce((sum, item) => sum + item.rating, 0);
+    renderTwentyBoard();
+    return;
+  }
+
+  const chosenPlayer = chosenSlot.options.find((player) => player.name.toLowerCase() === trimmedName.toLowerCase());
+  if (!chosenPlayer) return;
+
+  twentyState.selections[position] = chosenPlayer;
+  twentyState.total = Object.values(twentyState.selections).reduce((sum, item) => sum + item.rating, 0);
+  renderTwentyBoard();
+}
+
 function renderTwentyMode() {
   twentyState = {
     challenge: null,
@@ -450,7 +472,7 @@ function renderTwentyMode() {
         </div>
         <div class="prompt-box center">
           <h4>Spin for the team and era</h4>
-          <p>Pick a player for every position from the list below and try to surpass the target score.</p>
+          <p>Type a player for every position below and try to surpass the target score.</p>
         </div>
       </div>
     </div>
@@ -497,10 +519,18 @@ function renderTwentyBoard() {
           ${selected ? `<span class="slot-picked">${selected.name}</span>` : '<span class="slot-picked muted">Open</span>'}
         </div>
         <div class="slot-picker">
-          <select class="slot-select" data-position="${slot.position}">
-            <option value="">Pick ${slot.position}</option>
+          <input
+            class="slot-input"
+            type="text"
+            list="player-list-${slot.position}"
+            data-position="${slot.position}"
+            value="${selected ? selected.name : ''}"
+            placeholder="Type ${slot.position} player"
+            autocomplete="off"
+          >
+          <datalist id="player-list-${slot.position}">
             ${options}
-          </select>
+          </datalist>
         </div>
       </div>
     `;
@@ -541,7 +571,7 @@ function renderTwentyBoard() {
       <div class="game-panel">
         <div class="prompt-box">
           <h4>Wheel landed on ${challenge.team} in the ${challenge.era}</h4>
-          <p>Choose a player for each listed position to build the lineup and hit the target.</p>
+          <p>Type the player name for each listed position to build the lineup and hit the target.</p>
         </div>
         <div class="wheel-result">
           <div class="wheel-badge">${challenge.team}</div>
@@ -552,19 +582,9 @@ function renderTwentyBoard() {
     </div>
   `;
 
-  ui.gameModeContent.querySelectorAll('.slot-select').forEach((select) => {
-    select.addEventListener('change', () => {
-      const position = select.dataset.position;
-      const chosenName = select.value;
-      if (!chosenName) return;
-
-      const chosenSlot = challenge.lineup.find((slot) => slot.position === position);
-      const chosenPlayer = chosenSlot.options.find((player) => player.name === chosenName);
-      if (!chosenPlayer) return;
-
-      twentyState.selections[position] = chosenPlayer;
-      twentyState.total = Object.values(twentyState.selections).reduce((sum, item) => sum + item.rating, 0);
-      renderTwentyBoard();
+  ui.gameModeContent.querySelectorAll('.slot-input').forEach((input) => {
+    input.addEventListener('change', () => {
+      handleTwentySelection(input.dataset.position, input.value);
     });
   });
 }
