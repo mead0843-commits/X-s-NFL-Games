@@ -285,6 +285,18 @@ function addXp(amount) {
   state.xp += amount;
 }
 
+function normalizeName(value = '') {
+  return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function findPlayerByName(query, pool = playerPool) {
+  const cleaned = normalizeName(query);
+  if (!cleaned) return null;
+
+  return pool.find((player) => normalizeName(player.name) === cleaned)
+    || pool.find((player) => normalizeName(player.name).includes(cleaned));
+}
+
 function updateStats() {
   ui.coinCount.textContent = state.coins;
   ui.streakCount.textContent = state.streak;
@@ -434,15 +446,15 @@ function handleTwentySelection(position, chosenName) {
   const chosenSlot = twentyState.challenge.lineup.find((slot) => slot.position === position);
   if (!chosenSlot) return;
 
-  const trimmedName = chosenName.trim();
-  if (!trimmedName) {
+  const trimmedValue = String(chosenName ?? '').trim();
+  if (!trimmedValue) {
     delete twentyState.selections[position];
     twentyState.total = Object.values(twentyState.selections).reduce((sum, item) => sum + item.rating, 0);
     renderTwentyBoard();
     return;
   }
 
-  const chosenPlayer = chosenSlot.options.find((player) => player.name.toLowerCase() === trimmedName.toLowerCase());
+  const chosenPlayer = findPlayerByName(trimmedValue, chosenSlot.options);
   if (!chosenPlayer) return;
 
   twentyState.selections[position] = chosenPlayer;
@@ -658,8 +670,65 @@ function renderGuessMode() {
   let guesses = 0;
   const maxGuesses = 5;
 
+  const submitGuess = (guessValue) => {
+    const chosen = findPlayerByName(guessValue, playerPool);
+    if (!chosen) {
+      alert('Player not found. Try a valid NFL player name.');
+      return false;
+    }
+
+    guesses += 1;
+    if (chosen.name === target.name) {
+      const scoreBonus = Math.max(100, 260 - (guesses * 30));
+      state.coins += scoreBonus;
+      state.modeWins.guess += 1;
+      addXp(120 + scoreBonus / 3);
+      state.streak += 1;
+      persistState();
+      updateStats();
+      ui.gameModeContent.innerHTML = `
+        <div class="mode-shell">
+          <div class="mode-header">
+            <h3>Guess the Player</h3>
+          </div>
+          <div class="result-banner win">
+            <h4>You got it!</h4>
+            <p>${target.name} was the player. You earned ${scoreBonus} coins.</p>
+            <button class="primary-btn small" onclick="renderGuessMode()">Play again</button>
+          </div>
+        </div>
+      `;
+      return true;
+    }
+
+    const list = (renderBoard.guessesMade || []).concat(chosen);
+    if (guesses >= maxGuesses) {
+      state.streak = 0;
+      persistState();
+      updateStats();
+      ui.gameModeContent.innerHTML = `
+        <div class="mode-shell">
+          <div class="mode-header">
+            <h3>Guess the Player</h3>
+          </div>
+          <div class="result-banner loss">
+            <h4>Out of guesses</h4>
+            <p>The player was ${target.name}. Better luck next round.</p>
+            <button class="primary-btn small" onclick="renderGuessMode()">Try again</button>
+          </div>
+        </div>
+      `;
+      return true;
+    }
+
+    renderBoard(list);
+    return true;
+  };
+
   const renderBoard = (guessesMade) => {
-    const rows = guessesMade.map((guess) => {
+    renderBoard.guessesMade = guessesMade || [];
+
+    const rows = renderBoard.guessesMade.map((guess) => {
       const isTeam = guess.team === target.team;
       const isPosition = guess.position === target.position;
       const isEra = guess.era === target.era;
@@ -692,6 +761,13 @@ function renderGuessMode() {
             <p>Team: ${target.team} • Position: ${target.position} • Era: ${target.era} • Stat Range: ${target.statRange}</p>
           </div>
           <div class="guess-board">${rows}</div>
+          <div class="guess-input-row">
+            <input id="guess-player-input" type="text" placeholder="Type a player name" list="guess-player-options" autocomplete="off" />
+            <button id="guess-submit-btn" class="primary-btn small">Guess</button>
+          </div>
+          <datalist id="guess-player-options">
+            ${playerPool.map((player) => `<option value="${player.name}"></option>`).join('')}
+          </datalist>
           <div class="answer-grid">
             ${playerPool.map((player) => `<button class="guess-btn" data-name="${player.name}">${player.name}</button>`).join('')}
           </div>
@@ -699,56 +775,28 @@ function renderGuessMode() {
       </div>
     `;
 
+    const guessInput = document.getElementById('guess-player-input');
+    const guessButton = document.getElementById('guess-submit-btn');
+
+    if (guessInput && guessButton) {
+      guessButton.addEventListener('click', () => {
+        const value = guessInput.value;
+        if (!value) return;
+        submitGuess(value);
+      });
+
+      guessInput.addEventListener('keydown', (event) => {
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          const value = guessInput.value;
+          if (value) submitGuess(value);
+        }
+      });
+    }
+
     ui.gameModeContent.querySelectorAll('.guess-btn').forEach((btn) => {
       btn.addEventListener('click', () => {
-        const chosen = btn.dataset.name;
-        guesses += 1;
-        const guessedPlayer = playerPool.find((p) => p.name === chosen);
-
-        if (chosen === target.name) {
-          const scoreBonus = Math.max(100, 260 - (guesses * 30));
-          state.coins += scoreBonus;
-          state.modeWins.guess += 1;
-          addXp(120 + scoreBonus / 3);
-          state.streak += 1;
-          persistState();
-          updateStats();
-          ui.gameModeContent.innerHTML = `
-            <div class="mode-shell">
-              <div class="mode-header">
-                <h3>Guess the Player</h3>
-              </div>
-              <div class="result-banner win">
-                <h4>You got it!</h4>
-                <p>${target.name} was the player. You earned ${scoreBonus} coins.</p>
-                <button class="primary-btn small" onclick="renderGuessMode()">Play again</button>
-              </div>
-            </div>
-          `;
-          return;
-        }
-
-        const list = (guessesMade || []).concat(guessedPlayer);
-        if (guesses >= maxGuesses) {
-          state.streak = 0;
-          persistState();
-          updateStats();
-          ui.gameModeContent.innerHTML = `
-            <div class="mode-shell">
-              <div class="mode-header">
-                <h3>Guess the Player</h3>
-              </div>
-              <div class="result-banner loss">
-                <h4>Out of guesses</h4>
-                <p>The player was ${target.name}. Better luck next round.</p>
-                <button class="primary-btn small" onclick="renderGuessMode()">Try again</button>
-              </div>
-            </div>
-          `;
-          return;
-        }
-
-        renderBoard(list);
+        submitGuess(btn.dataset.name);
       });
     });
   };
