@@ -528,7 +528,7 @@ function renderTwentyBoard() {
     const selected = twentyState.selections[slot.position];
     const options = slot.options.map((player) => `
       <option value="${player.name}" ${selected && selected.name === player.name ? 'selected' : ''}>
-        ${player.name} (${player.rating})
+        ${player.name}
       </option>
     `).join('');
 
@@ -1380,7 +1380,8 @@ function renderBlitzMode() {
 }
 
 function renderHome() {
-  document.querySelectorAll('.nav-btn').forEach((button) => {
+  const homeButtons = document.querySelectorAll('.nav-btn');
+  homeButtons.forEach((button) => {
     button.classList.toggle('active', button.dataset.view === 'home');
   });
 
