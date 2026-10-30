@@ -97,10 +97,10 @@ const triviaBank = [
   { question: 'Who is the all-time leader in NFL rushing yards?', choices: ['Emmitt Smith', 'Walter Payton', 'Barry Sanders', 'Adrian Peterson'], correct: 0, difficulty: 'Hall of Fame' },
   { question: 'Which player was nicknamed “The Refrigerator”?', choices: ['William “The Refrigerator” Perry', 'Bubba Smith', 'Nose tackle Joe Greene', 'Richard Dent'], correct: 0, difficulty: 'Champion' },
   { question: 'Which team won Super Bowl XXXIV?', choices: ['Rams', 'Patriots', 'Saints', 'Bengals'], correct: 0, difficulty: 'Champion' },
-  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Hall of Fame' },
+  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Champion' },
   { question: 'Who was the first overall pick in the 2024 NFL Draft?', choices: ['Caleb Williams', 'Drake Maye', 'Jayden Daniels', 'Marvin Harrison Jr.'], correct: 0, difficulty: 'Champion' },
   { question: 'Which player had the longest touchdown reception in NFL history?', choices: ['Randy Moss', 'Tyreek Hill', 'DeSean Jackson', 'J.J. Nelson'], correct: 1, difficulty: 'Legend' },
-  { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Champion' }
+  { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Legend' }
 ];
 
 const playerPool = [
@@ -402,7 +402,8 @@ function buildTwentyLineup(team, era) {
   return positions.map((position) => {
     const teamEraPool = playerPool.filter((player) => player.position === position && (player.team === team || player.era === era));
     const fallbackPool = playerPool.filter((player) => player.position === position);
-    const uniquePlayers = [...new Map([...teamEraPool, ...fallbackPool].map((player) => [player.name, player])).values()];
+    const uniquePlayers = [...new Map([...teamEraPool, ...fallbackPool].map((player) => [player.name, player])).values()]
+      .sort((a, b) => (b.rating || 0) - (a.rating || 0));
 
     return {
       position,
@@ -555,7 +556,7 @@ function renderTwentyMode() {
 }
 
 function renderTwentyBoard() {
-  if (!twentyState.challenge) {
+  if (!twentyState || !twentyState.challenge) {
     renderTwentyMode();
     return;
   }
@@ -563,6 +564,7 @@ function renderTwentyBoard() {
   const challenge = twentyState.challenge;
   const selectedCount = Object.keys(twentyState.selections).length;
   const isComplete = selectedCount === challenge.lineup.length;
+  const remaining = Math.max(0, challenge.target - twentyState.total);
 
   const slotCards = challenge.lineup.map((slot) => {
     const selected = twentyState.selections[slot.position];
@@ -596,8 +598,8 @@ function renderTwentyBoard() {
     `;
   }).join('');
 
-  if (isComplete) {
-    const reward = Math.max(90, twentyState.total * 2);
+  if (isComplete && twentyState.total >= challenge.target) {
+    const reward = Math.max(180, challenge.target + (twentyState.total - challenge.target) * 2);
     state.coins += reward;
     state.modeWins.twenty += 1;
     state.streak = Math.max(state.streak + 1, 1);
@@ -613,8 +615,8 @@ function renderTwentyBoard() {
           <span class="score-tag">${challenge.team} / ${challenge.era}</span>
         </div>
         <div class="result-banner win">
-          <h4>Lineup complete</h4>
-          <p>You built a ${challenge.team} ${challenge.era} lineup with ${twentyState.total} total points and earned ${reward} coins.</p>
+          <h4>20-0 complete</h4>
+          <p>You built a ${challenge.team} ${challenge.era} lineup worth ${twentyState.total} points and cleared the ${challenge.target}-point target. You earned ${reward} coins.</p>
           <button class="primary-btn small" onclick="renderTwentyMode()">Spin again</button>
         </div>
       </div>
@@ -622,12 +624,16 @@ function renderTwentyBoard() {
     return;
   }
 
+  const targetText = isComplete
+    ? `Lineup complete: ${twentyState.total} / ${challenge.target} points` 
+    : `Target: ${challenge.target} • ${selectedCount}/${challenge.lineup.length} filled`;
+
   const rosterColumns = twentyState.rosterOrder.map((rosterKey) => {
     const label = rosterKey === 'playerOne' ? 'Player 1 roster' : rosterKey === 'playerTwo' ? 'Player 2 roster' : `Player ${rosterKey.replace('player', '')} roster`;
     return `
       <div class="roster-column">
         <div class="roster-title">${label}</div>
-        <textarea class="roster-text" data-roster="${rosterKey}" placeholder="QB: Patrick Mahomes\nRB: Christian McCaffrey\nWR: JaMarr Chase\nTE: Travis Kelce">${twentyState.rosters?.[rosterKey] || ''}</textarea>
+        <textarea class="roster-text" data-roster="${rosterKey}" placeholder="QB: Patrick Mahomes\nRB: Christian McCaffrey\nWR: JaMarr Chase\nTE: Travis Kelce">${twentyState.rosters?.[rosterKey] ?? ''}</textarea>
       </div>
     `;
   }).join('');
@@ -641,11 +647,12 @@ function renderTwentyBoard() {
       <div class="game-panel">
         <div class="prompt-box">
           <h4>Wheel landed on ${challenge.team} in the ${challenge.era}</h4>
-          <p>Type the player name for each listed position to build the lineup and hit the target.</p>
+          <p>${isComplete ? (remaining > 0 ? `You need ${remaining} more points to hit the target.` : 'Target cleared!') : 'Type the player name for each listed position to build the lineup and hit the target.'}</p>
         </div>
         <div class="wheel-result">
           <div class="wheel-badge">${challenge.team}</div>
           <div class="wheel-badge secondary">${challenge.era}</div>
+          <div class="wheel-badge tertiary">${twentyState.total} / ${challenge.target}</div>
         </div>
         <div class="slot-grid">${slotCards}</div>
         <div class="roster-battle">
@@ -656,9 +663,8 @@ function renderTwentyBoard() {
           <button type="button" class="secondary-btn small" id="addRosterBtn">Add roster</button>
         </div>
         <div class="roster-scoreboard" id="rosterScoreboard">
-          <strong>Player 1: 0</strong>
-          <strong>Player 2: 0</strong>
-          <span>Awaiting both rosters</span>
+          <strong>${targetText}</strong>
+          <span>${isComplete && remaining > 0 ? `Needs ${remaining} more` : 'Target in range'}</span>
         </div>
       </div>
     </div>
