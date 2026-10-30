@@ -159,7 +159,59 @@ const playerPool = [
   { name: 'Marshawn Lynch', position: 'RB', team: 'Seahawks', era: '2010s', college: 'California', statRange: '1000+ rushing yards', rating: 90, number: 24 },
   { name: 'DeAndre Hopkins', position: 'WR', team: 'Texans', era: '2010s', college: 'Clemson', statRange: '1100+ receiving yards', rating: 92, number: 10 },
   { name: 'Stefon Diggs', position: 'WR', team: 'Bills', era: '2020s', college: 'Maryland', statRange: '1000+ receiving yards', rating: 91, number: 14 },
-  { name: 'Mike Evans', position: 'WR', team: 'Buccaneers', era: '2020s', college: 'Texas A&M', statRange: '1100+ receiving yards', rating: 90, number: 13 }
+  { name: 'Mike Evans', position: 'WR', team: 'Buccaneers', era: '2020s', college: 'Texas A&M', statRange: '1100+ receiving yards', rating: 90, number: 13 },
+  { name: 'A.J. Brown', position: 'WR', team: 'Eagles', era: '2020s', college: 'Ole Miss', statRange: '1100+ receiving yards', rating: 91, number: 11 },
+  { name: 'Cooper Kupp', position: 'WR', team: 'Rams', era: '2020s', college: 'Eastern Washington', statRange: '1200+ receiving yards', rating: 90, number: 10 },
+  { name: 'Davante Adams', position: 'WR', team: 'Raiders', era: '2020s', college: 'Fresno State', statRange: '1100+ receiving yards', rating: 90, number: 17 },
+  { name: 'Tee Higgins', position: 'WR', team: 'Bengals', era: '2020s', college: 'Clemson', statRange: '1000+ receiving yards', rating: 88, number: 5 },
+  { name: 'Garrett Wilson', position: 'WR', team: 'Jets', era: '2020s', college: 'Ohio State', statRange: '1000+ receiving yards', rating: 88, number: 11 },
+  { name: 'Amon-Ra St. Brown', position: 'WR', team: 'Lions', era: '2020s', college: 'USC', statRange: '1000+ receiving yards', rating: 89, number: 14 },
+  { name: 'CeeDee Lamb', position: 'WR', team: 'Cowboys', era: '2020s', college: 'Oklahoma', statRange: '1200+ receiving yards', rating: 92, number: 88 },
+  { name: 'Breece Hall', position: 'RB', team: 'Jets', era: '2020s', college: 'Iowa State', statRange: '1000+ rushing yards', rating: 86, number: 20 },
+  { name: 'Bijan Robinson', position: 'RB', team: 'Falcons', era: '2020s', college: 'Texas', statRange: '1000+ rushing yards', rating: 88, number: 7 },
+  { name: 'Jonathan Taylor', position: 'RB', team: 'Colts', era: '2020s', college: 'Wisconsin', statRange: '1100+ rushing yards', rating: 89, number: 28 },
+  { name: 'Nick Chubb', position: 'RB', team: 'Browns', era: '2020s', college: 'Georgia', statRange: '1100+ rushing yards', rating: 89, number: 24 },
+  { name: 'Joe Mixon', position: 'RB', team: 'Bengals', era: '2020s', college: 'Oklahoma', statRange: '1000+ rushing yards', rating: 88, number: 28 },
+  { name: 'Alvin Kamara', position: 'RB', team: 'Saints', era: '2020s', college: 'Tennessee', statRange: '1000+ rushing yards', rating: 88, number: 41 },
+  { name: 'LeVeon Bell', position: 'RB', team: 'Steelers', era: '2010s', college: 'Michigan State', statRange: '1100+ rushing yards', rating: 88, number: 26 },
+  { name: 'Ricky Williams', position: 'RB', team: 'Dolphins', era: '2000s', college: 'Texas', statRange: '1300+ rushing yards', rating: 90, number: 34 },
+  { name: 'Emmitt Smith', position: 'RB', team: 'Cowboys', era: '1990s', college: 'Florida', statRange: '1500+ rushing yards', rating: 95, number: 22 },
+  { name: 'Walter Payton', position: 'RB', team: 'Bears', era: '1980s', college: 'Jackson State', statRange: '1500+ rushing yards', rating: 94, number: 34 },
+  { name: 'Marcus Allen', position: 'RB', team: 'Raiders', era: '1980s', college: 'USC', statRange: '1400+ rushing yards', rating: 92, number: 32 },
+  { name: 'Terrell Suggs', position: 'EDGE', team: 'Ravens', era: '2010s', college: 'Arizona State', statRange: '10+ sacks', rating: 90, number: 55 },
+  { name: 'Nick Bosa', position: 'EDGE', team: '49ers', era: '2020s', college: 'Ohio State', statRange: '15+ sacks', rating: 94, number: 97 },
+  { name: 'Micah Parsons', position: 'EDGE', team: 'Cowboys', era: '2020s', college: 'Penn State', statRange: '15+ sacks', rating: 94, number: 11 },
+  { name: 'Shaquille Leonard', position: 'LB', team: 'Colts', era: '2020s', college: 'South Carolina State', statRange: '150+ tackles', rating: 91, number: 52 },
+  { name: 'Von Miller', position: 'EDGE', team: 'Bills', era: '2020s', college: 'Texas A&M', statRange: '12+ sacks', rating: 90, number: 40 },
+  { name: 'Trevon Diggs', position: 'CB', team: 'Cowboys', era: '2020s', college: 'Alabama', statRange: '5+ INTs', rating: 92, number: 7 },
+  { name: 'Marlon Humphrey', position: 'CB', team: 'Ravens', era: '2020s', college: 'Alabama', statRange: '5+ INTs', rating: 90, number: 26 },
+  { name: 'Jaire Alexander', position: 'CB', team: 'Packers', era: '2020s', college: 'Louisville', statRange: '4+ INTs', rating: 89, number: 23 },
+  { name: 'Lance Barber', position: 'DT', team: 'Bears', era: '2020s', college: 'North Carolina', statRange: '7+ sacks', rating: 86, number: 93 },
+  { name: 'Minkah Fitzpatrick', position: 'S', team: 'Steelers', era: '2020s', college: 'Alabama', statRange: '5+ INTs', rating: 91, number: 39 },
+  { name: 'Derwin James', position: 'S', team: 'Chargers', era: '2020s', college: 'Florida State', statRange: '4+ INTs', rating: 90, number: 3 },
+  { name: 'Tyreek Hill', position: 'WR', team: 'Dolphins', era: '2020s', college: 'West Alabama', statRange: '1200+ receiving yards', rating: 94, number: 10 },
+  { name: 'Harrison Butker', position: 'K', team: 'Chiefs', era: '2020s', college: 'Georgia Tech', statRange: '90% FG', rating: 92, number: 7 },
+  { name: 'Jake Elliott', position: 'K', team: 'Eagles', era: '2020s', college: 'Memphis', statRange: '88% FG', rating: 88, number: 4 },
+  { name: 'Sammy Watkins', position: 'WR', team: 'Chiefs', era: '2010s', college: 'Clemson', statRange: '1000+ receiving yards', rating: 88, number: 14 },
+  { name: 'Victor Cruz', position: 'WR', team: 'Giants', era: '2010s', college: 'Massachusetts', statRange: '1000+ receiving yards', rating: 87, number: 80 },
+  { name: 'Anquan Boldin', position: 'WR', team: 'Ravens', era: '2000s', college: 'Florida State', statRange: '1100+ receiving yards', rating: 90, number: 81 },
+  { name: 'Isaac Bruce', position: 'WR', team: 'Rams', era: '1990s', college: 'Memphis', statRange: '1400+ receiving yards', rating: 91, number: 80 },
+  { name: 'Chris Carter', position: 'WR', team: 'Vikings', era: '1990s', college: 'Ohio State', statRange: '1300+ receiving yards', rating: 90, number: 80 },
+  { name: 'Keenan Allen', position: 'WR', team: 'Chargers', era: '2020s', college: 'California', statRange: '1100+ receiving yards', rating: 89, number: 13 },
+  { name: 'Brett Favre', position: 'QB', team: 'Packers', era: '1990s', college: 'Southern Miss', statRange: '4000+ passing yards', rating: 96, number: 4 },
+  { name: 'Philip Rivers', position: 'QB', team: 'Chargers', era: '2010s', college: 'NC State', statRange: '4000+ passing yards', rating: 92, number: 17 },
+  { name: 'Drew Brees', position: 'QB', team: 'Saints', era: '2000s', college: 'Purdue', statRange: '4000+ passing yards', rating: 95, number: 9 },
+  { name: 'Ben Roethlisberger', position: 'QB', team: 'Steelers', era: '2000s', college: 'Miami', statRange: '4000+ passing yards', rating: 93, number: 7 },
+  { name: 'Aaron Rodgers', position: 'QB', team: 'Packers', era: '2010s', college: 'California', statRange: '4000+ passing yards', rating: 96, number: 12 },
+  { name: 'Kyler Murray', position: 'QB', team: 'Cardinals', era: '2020s', college: 'Oklahoma', statRange: '3500+ passing yards', rating: 91, number: 1 },
+  { name: 'Jalen Hurts', position: 'QB', team: 'Eagles', era: '2020s', college: 'Oklahoma', statRange: '3500+ passing yards', rating: 90, number: 1 },
+  { name: 'Tua Tagovailoa', position: 'QB', team: 'Dolphins', era: '2020s', college: 'Alabama', statRange: '3500+ passing yards', rating: 89, number: 1 },
+  { name: 'Deshaun Watson', position: 'QB', team: 'Browns', era: '2020s', college: 'Clemson', statRange: '3500+ passing yards', rating: 89, number: 4 },
+  { name: 'Mitchell Trubisky', position: 'QB', team: 'Bears', era: '2010s', college: 'North Carolina', statRange: '3000+ passing yards', rating: 85, number: 10 },
+  { name: 'Carson Wentz', position: 'QB', team: 'Eagles', era: '2010s', college: 'North Dakota State', statRange: '3500+ passing yards', rating: 88, number: 11 },
+  { name: 'Eli Manning', position: 'QB', team: 'Giants', era: '2010s', college: 'Ole Miss', statRange: '3500+ passing yards', rating: 87, number: 10 },
+  { name: 'Kurt Warner', position: 'QB', team: 'Rams', era: '2000s', college: 'Northern Iowa', statRange: '3500+ passing yards', rating: 91, number: 13 },
+  { name: 'David Ortiz', position: 'QB', team: 'Dolphins', era: '1980s', college: 'Miami', statRange: '3000+ passing yards', rating: 74, number: 0 }
 ];
 
 const packCatalog = [
@@ -808,8 +860,9 @@ function renderTriviaMode() {
 function renderGuessMode(mode = 'allTime') {
   const target = getRandomGuessPlayer(mode);
   let guesses = 0;
-  const maxGuesses = 5;
+  const maxGuesses = 10;
   const clueSequence = getGuessClueSequence(target);
+  const baseReward = 500;
 
   const submitGuess = (guessValue) => {
     const chosen = findPlayerByName(guessValue, getGuessPlayerPool(mode));
@@ -819,11 +872,13 @@ function renderGuessMode(mode = 'allTime') {
     }
 
     guesses += 1;
+    const currentPenalty = (guesses - 1) * 50;
+    const rewardAfterPenalty = Math.max(0, baseReward - currentPenalty);
+
     if (chosen.name === target.name) {
-      const scoreBonus = Math.max(100, 260 - (guesses * 30));
-      state.coins += scoreBonus;
+      state.coins += rewardAfterPenalty;
       state.modeWins.guess += 1;
-      addXp(120 + scoreBonus / 3);
+      addXp(120 + rewardAfterPenalty / 3);
       state.streak += 1;
       persistState();
       updateStats();
@@ -834,7 +889,7 @@ function renderGuessMode(mode = 'allTime') {
           </div>
           <div class="result-banner win">
             <h4>You got it!</h4>
-            <p>${target.name} was the player. You earned ${scoreBonus} coins.</p>
+            <p>${target.name} was the player. You earned ${rewardAfterPenalty} coins.</p>
             <button class="primary-btn small" onclick="renderGuessMode('${mode}')">Play again</button>
           </div>
         </div>
@@ -842,7 +897,6 @@ function renderGuessMode(mode = 'allTime') {
       return true;
     }
 
-    const list = (renderBoard.guessesMade || []).concat(chosen);
     if (guesses >= maxGuesses) {
       state.streak = 0;
       persistState();
@@ -854,7 +908,7 @@ function renderGuessMode(mode = 'allTime') {
           </div>
           <div class="result-banner loss">
             <h4>Out of guesses</h4>
-            <p>The player was ${target.name}. Better luck next round.</p>
+            <p>The player was ${target.name}. You lost the full reward because you used all 10 guesses.</p>
             <button class="primary-btn small" onclick="renderGuessMode('${mode}')">Try again</button>
           </div>
         </div>
@@ -862,7 +916,7 @@ function renderGuessMode(mode = 'allTime') {
       return true;
     }
 
-    renderBoard(list);
+    renderBoard((renderBoard.guessesMade || []).concat(chosen));
     return true;
   };
 
@@ -913,14 +967,8 @@ function renderGuessMode(mode = 'allTime') {
           </div>
           <div class="guess-board">${rows}</div>
           <div class="guess-input-row">
-            <input id="guess-player-input" type="text" placeholder="Type a player name" list="guess-player-options" autocomplete="off" />
+            <input id="guess-player-input" type="text" placeholder="Type a player name" autocomplete="off" />
             <button id="guess-submit-btn" class="primary-btn small">Guess</button>
-          </div>
-          <datalist id="guess-player-options">
-            ${getGuessPlayerPool(mode).map((player) => `<option value="${player.name}"></option>`).join('')}
-          </datalist>
-          <div class="answer-grid">
-            ${getGuessPlayerPool(mode).map((player) => `<button class="guess-btn" data-name="${player.name}">${player.name}</button>`).join('')}
           </div>
         </div>
       </div>
@@ -944,12 +992,6 @@ function renderGuessMode(mode = 'allTime') {
         }
       });
     }
-
-    ui.gameModeContent.querySelectorAll('.guess-btn').forEach((btn) => {
-      btn.addEventListener('click', () => {
-        submitGuess(btn.dataset.name);
-      });
-    });
   };
 
   renderBoard([]);
