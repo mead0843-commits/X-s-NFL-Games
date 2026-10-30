@@ -97,10 +97,10 @@ const triviaBank = [
   { question: 'Who is the all-time leader in NFL rushing yards?', choices: ['Emmitt Smith', 'Walter Payton', 'Barry Sanders', 'Adrian Peterson'], correct: 0, difficulty: 'Hall of Fame' },
   { question: 'Which player was nicknamed “The Refrigerator”?', choices: ['William “The Refrigerator” Perry', 'Bubba Smith', 'Nose tackle Joe Greene', 'Richard Dent'], correct: 0, difficulty: 'Champion' },
   { question: 'Which team won Super Bowl XXXIV?', choices: ['Rams', 'Patriots', 'Saints', 'Bengals'], correct: 0, difficulty: 'Champion' },
-  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Champion' },
+  { question: 'Which quarterback owns the NFL record for most passing touchdowns in a single season?', choices: ['Tom Brady', 'Peyton Manning', 'Patrick Mahomes', 'Brett Favre'], correct: 0, difficulty: 'Legend' },
   { question: 'Who was the first overall pick in the 2024 NFL Draft?', choices: ['Caleb Williams', 'Drake Maye', 'Jayden Daniels', 'Marvin Harrison Jr.'], correct: 0, difficulty: 'Champion' },
   { question: 'Which player had the longest touchdown reception in NFL history?', choices: ['Randy Moss', 'Tyreek Hill', 'DeSean Jackson', 'J.J. Nelson'], correct: 1, difficulty: 'Legend' },
-  { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'Legend' }
+  { question: 'Who is the only player to win NFL MVP in both the AFC and NFC as a quarterback after 2010?', choices: ['Tom Brady', 'Patrick Mahomes', 'Aaron Rodgers', 'Joe Burrow'], correct: 1, difficulty: 'All-Pro' }
 ];
 
 const playerPool = [
@@ -459,15 +459,6 @@ function scoreRosterFromText(rawText, challenge) {
   }, 0);
 }
 
-function addTwentyRoster() {
-  if (!twentyState) return;
-  const nextIndex = twentyState.rosterOrder.length + 1;
-  const key = `player${nextIndex}`;
-  twentyState.rosterOrder.push(key);
-  twentyState.rosters[key] = '';
-  renderTwentyBoard();
-}
-
 function determineTwentyWinner(scoreEntries) {
   if (!Array.isArray(scoreEntries) || scoreEntries.length < 2) {
     return { winner: null, isTie: false, winnerLabel: null, winnerScore: 0, scoreEntries };
@@ -491,19 +482,20 @@ function compareTwentyRosters() {
     values[field.dataset.roster] = field.value;
   });
 
-  const activeRosterCount = twentyState.rosterOrder.filter((rosterKey) => String(values[rosterKey] || '').trim()).length;
+  const rosterOrder = ['playerOne', 'playerTwo'];
+  const activeRosterCount = rosterOrder.filter((rosterKey) => String(values[rosterKey] || '').trim()).length;
   if (activeRosterCount < 2) {
     const scoreboard = document.getElementById('rosterScoreboard');
     if (scoreboard) {
-      scoreboard.innerHTML = '<strong>Need both rosters</strong><span>Enter Player 1 and Player 2 selections on the same device.</span>';
+      scoreboard.innerHTML = '<strong>Need both rosters</strong><span>Enter player names in both roster boxes.</span>';
     }
     return;
   }
 
-  const scoreEntries = twentyState.rosterOrder.map((rosterKey) => ({
+  const scoreEntries = rosterOrder.map((rosterKey) => ({
     key: rosterKey,
     value: scoreRosterFromText(values[rosterKey] || '', twentyState.challenge),
-    label: rosterKey === 'playerOne' ? 'Player 1' : rosterKey === 'playerTwo' ? 'Player 2' : `Player ${rosterKey.replace('player', '')}`
+    label: rosterKey === 'playerOne' ? 'Player 1' : 'Player 2'
   }));
 
   const { winner, isTie, winnerLabel, winnerScore } = determineTwentyWinner(scoreEntries);
@@ -562,7 +554,7 @@ function renderTwentyMode() {
           </div>
           <div class="wheel-copy">
             <h4>Spin for a team and era</h4>
-            <p>Same-device local 1v1: Player 1 and Player 2 enter their own lineup selections on this device, then compare the totals.</p>
+            <p>Type your lineup into the two roster boxes, then compare totals.</p>
             <button type="button" class="primary-btn" id="twentySpinBtn">Spin Wheel</button>
           </div>
         </div>
@@ -610,11 +602,7 @@ function renderTwentyBoard() {
 
   const slotCards = challenge.lineup.map((slot) => {
     const selected = twentyState.selections[slot.position];
-    const options = slot.options.map((player) => `
-      <option value="${player.name}" ${selected && selected.name === player.name ? 'selected' : ''}>
-        ${player.name}
-      </option>
-    `).join('');
+    const value = selected ? selected.name : '';
 
     return `
       <div class="slot-card">
@@ -626,15 +614,15 @@ function renderTwentyBoard() {
           <input
             class="slot-input"
             type="text"
-            list="player-list-${slot.position}"
             data-position="${slot.position}"
-            value="${selected ? selected.name : ''}"
+            value="${value}"
             placeholder="Type ${slot.position} player"
             autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            aria-autocomplete="none"
           >
-          <datalist id="player-list-${slot.position}">
-            ${options}
-          </datalist>
         </div>
       </div>
     `;
@@ -671,11 +659,11 @@ function renderTwentyBoard() {
     : `Target: ${challenge.target} • ${selectedCount}/${challenge.lineup.length} filled`;
 
   const rosterColumns = twentyState.rosterOrder.map((rosterKey) => {
-    const label = rosterKey === 'playerOne' ? 'Player 1 roster' : rosterKey === 'playerTwo' ? 'Player 2 roster' : `Player ${rosterKey.replace('player', '')} roster`;
+    const label = rosterKey === 'playerOne' ? 'Player 1 roster' : 'Player 2 roster';
     return `
       <div class="roster-column">
         <div class="roster-title">${label}</div>
-        <textarea class="roster-text" data-roster="${rosterKey}" placeholder="QB: Patrick Mahomes\nRB: Christian McCaffrey\nWR: JaMarr Chase\nTE: Travis Kelce">${twentyState.rosters?.[rosterKey] ?? ''}</textarea>
+        <textarea class="roster-text" data-roster="${rosterKey}" placeholder="Type player names here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">${twentyState.rosters?.[rosterKey] || ''}</textarea>
       </div>
     `;
   }).join('');
@@ -702,7 +690,6 @@ function renderTwentyBoard() {
         </div>
         <div class="battle-actions">
           <button type="button" class="primary-btn small" id="compareRosterBtn">Compare rosters</button>
-          <button type="button" class="secondary-btn small" id="addRosterBtn">Add roster</button>
         </div>
         <div class="roster-scoreboard" id="rosterScoreboard">
           <strong>${targetText}</strong>
@@ -728,11 +715,6 @@ function renderTwentyBoard() {
   const compareButton = document.getElementById('compareRosterBtn');
   if (compareButton) {
     compareButton.addEventListener('click', compareTwentyRosters);
-  }
-
-  const addRosterButton = document.getElementById('addRosterBtn');
-  if (addRosterButton) {
-    addRosterButton.addEventListener('click', addTwentyRoster);
   }
 }
 
