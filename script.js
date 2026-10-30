@@ -468,6 +468,20 @@ function addTwentyRoster() {
   renderTwentyBoard();
 }
 
+function determineTwentyWinner(scoreEntries) {
+  if (!Array.isArray(scoreEntries) || scoreEntries.length < 2) {
+    return { winner: null, isTie: false, winnerLabel: null, winnerScore: 0, scoreEntries };
+  }
+
+  const [first, second] = scoreEntries;
+  if (first.value === second.value) {
+    return { winner: null, isTie: true, winnerLabel: 'Tie game', winnerScore: first.value, scoreEntries };
+  }
+
+  const winner = first.value > second.value ? first : second;
+  return { winner, isTie: false, winnerLabel: winner.label, winnerScore: winner.value, scoreEntries };
+}
+
 function compareTwentyRosters() {
   if (!twentyState || !twentyState.challenge || !ui.gameModeContent) return;
 
@@ -477,19 +491,47 @@ function compareTwentyRosters() {
     values[field.dataset.roster] = field.value;
   });
 
+  const activeRosterCount = twentyState.rosterOrder.filter((rosterKey) => String(values[rosterKey] || '').trim()).length;
+  if (activeRosterCount < 2) {
+    const scoreboard = document.getElementById('rosterScoreboard');
+    if (scoreboard) {
+      scoreboard.innerHTML = '<strong>Need both rosters</strong><span>Enter Player 1 and Player 2 selections on the same device.</span>';
+    }
+    return;
+  }
+
   const scoreEntries = twentyState.rosterOrder.map((rosterKey) => ({
     key: rosterKey,
     value: scoreRosterFromText(values[rosterKey] || '', twentyState.challenge),
     label: rosterKey === 'playerOne' ? 'Player 1' : rosterKey === 'playerTwo' ? 'Player 2' : `Player ${rosterKey.replace('player', '')}`
   }));
 
+  const { winner, isTie, winnerLabel, winnerScore } = determineTwentyWinner(scoreEntries);
   const scoreboard = document.getElementById('rosterScoreboard');
 
   if (scoreboard) {
-    const winner = scoreEntries.length > 1 ? scoreEntries.reduce((best, entry) => entry.value > best.value ? entry : best, scoreEntries[0]) : scoreEntries[0];
+    if (isTie) {
+      scoreboard.innerHTML = `
+        ${scoreEntries.map((entry) => `<strong>${entry.label}: ${entry.value}</strong>`).join('')}
+        <span>Tie game — both rosters scored ${winnerScore}</span>
+      `;
+      return;
+    }
+
+    const scoreGap = Math.abs(scoreEntries[0].value - scoreEntries[1].value);
+    const reward = 120 + scoreGap * 2;
+    state.coins += reward;
+    state.modeWins.twenty += 1;
+    state.localWins += winner ? 1 : 0;
+    state.streak = Math.max(state.streak + 1, 1);
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+    addXp(160 + scoreGap);
+    persistState();
+    updateStats();
+
     scoreboard.innerHTML = `
       ${scoreEntries.map((entry) => `<strong>${entry.label}: ${entry.value}</strong>`).join('')}
-      <span>${scoreEntries.length > 1 ? `${winner.label} leads` : `${winner.label}: ${winner.value}`}</span>
+      <span>${winnerLabel} wins by ${scoreGap} points — +${reward} coins</span>
     `;
   }
 }
@@ -520,7 +562,7 @@ function renderTwentyMode() {
           </div>
           <div class="wheel-copy">
             <h4>Spin for a team and era</h4>
-            <p>After the wheel lands, fill out your lineup and compare roster totals. Click the spin button multiple times to keep rolling for fresh matchups.</p>
+            <p>Same-device local 1v1: Player 1 and Player 2 enter their own lineup selections on this device, then compare the totals.</p>
             <button type="button" class="primary-btn" id="twentySpinBtn">Spin Wheel</button>
           </div>
         </div>
@@ -664,7 +706,7 @@ function renderTwentyBoard() {
         </div>
         <div class="roster-scoreboard" id="rosterScoreboard">
           <strong>${targetText}</strong>
-          <span>${isComplete && remaining > 0 ? `Needs ${remaining} more` : 'Target in range'}</span>
+          <span>${isComplete && remaining > 0 ? `Needs ${remaining} more` : 'Same-device 1v1 ready'}</span>
         </div>
       </div>
     </div>
