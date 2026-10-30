@@ -278,6 +278,28 @@ function findPlayerByName(query, pool = playerPool) {
     || pool.find((player) => normalizeName(player.name).includes(cleaned));
 }
 
+function getGuessPlayerPool(mode = 'allTime') {
+  if (mode === 'current') {
+    return playerPool.filter((player) => player.era === '2020s');
+  }
+  return playerPool;
+}
+
+function getRandomGuessPlayer(mode = 'allTime') {
+  const pool = getGuessPlayerPool(mode);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+
+function getGuessClueSequence(player) {
+  return [
+    { key: 'team', label: 'Team', value: player.team },
+    { key: 'position', label: 'Position', value: player.position },
+    { key: 'era', label: 'Era', value: player.era },
+    { key: 'statRange', label: 'Stat range', value: player.statRange },
+    { key: 'college', label: 'College', value: player.college }
+  ];
+}
+
 function updateStats() {
   if (ui.coinCount) ui.coinCount.textContent = state.coins;
   if (ui.streakCount) ui.streakCount.textContent = state.streak;
@@ -663,7 +685,7 @@ function renderTwentyBoard() {
     return `
       <div class="roster-column">
         <div class="roster-title">${label}</div>
-        <textarea class="roster-text" data-roster="${rosterKey}" placeholder="Type player names here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">${twentyState.rosters?.[rosterKey] || ''}</textarea>
+        <textarea class="roster-text" data-roster="${rosterKey}" placeholder="Type player names here..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">${twentyState.rosters[rosterKey] || ''}</textarea>
       </div>
     `;
   }).join('');
@@ -783,13 +805,14 @@ function renderTriviaMode() {
   });
 }
 
-function renderGuessMode() {
-  const target = playerPool[Math.floor(Math.random() * playerPool.length)];
+function renderGuessMode(mode = 'allTime') {
+  const target = getRandomGuessPlayer(mode);
   let guesses = 0;
   const maxGuesses = 5;
+  const clueSequence = getGuessClueSequence(target);
 
   const submitGuess = (guessValue) => {
-    const chosen = findPlayerByName(guessValue, playerPool);
+    const chosen = findPlayerByName(guessValue, getGuessPlayerPool(mode));
     if (!chosen) {
       alert('Player not found. Try a valid NFL player name.');
       return false;
@@ -812,7 +835,7 @@ function renderGuessMode() {
           <div class="result-banner win">
             <h4>You got it!</h4>
             <p>${target.name} was the player. You earned ${scoreBonus} coins.</p>
-            <button class="primary-btn small" onclick="renderGuessMode()">Play again</button>
+            <button class="primary-btn small" onclick="renderGuessMode('${mode}')">Play again</button>
           </div>
         </div>
       `;
@@ -832,7 +855,7 @@ function renderGuessMode() {
           <div class="result-banner loss">
             <h4>Out of guesses</h4>
             <p>The player was ${target.name}. Better luck next round.</p>
-            <button class="primary-btn small" onclick="renderGuessMode()">Try again</button>
+            <button class="primary-btn small" onclick="renderGuessMode('${mode}')">Try again</button>
           </div>
         </div>
       `;
@@ -867,6 +890,16 @@ function renderGuessMode() {
       `;
     }).join('');
 
+    const clueMarkup = clueSequence.map((clue, index) => {
+      const isVisible = index < guesses;
+      return `
+        <div class="guess-clue ${isVisible ? 'revealed' : ''}">
+          <span>Clue ${index + 1}</span>
+          <strong>${isVisible ? `${clue.label}: ${clue.value}` : 'Hidden'}</strong>
+        </div>
+      `;
+    }).join('');
+
     ui.gameModeContent.innerHTML = `
       <div class="mode-shell">
         <div class="mode-header">
@@ -876,7 +909,7 @@ function renderGuessMode() {
         <div class="game-panel">
           <div class="prompt-box">
             <h4>Clues</h4>
-            <p>Team: ${target.team} • Position: ${target.position} • Era: ${target.era} • Stat Range: ${target.statRange}</p>
+            <div class="guess-clue-list">${clueMarkup}</div>
           </div>
           <div class="guess-board">${rows}</div>
           <div class="guess-input-row">
@@ -884,10 +917,10 @@ function renderGuessMode() {
             <button id="guess-submit-btn" class="primary-btn small">Guess</button>
           </div>
           <datalist id="guess-player-options">
-            ${playerPool.map((player) => `<option value="${player.name}"></option>`).join('')}
+            ${getGuessPlayerPool(mode).map((player) => `<option value="${player.name}"></option>`).join('')}
           </datalist>
           <div class="answer-grid">
-            ${playerPool.map((player) => `<button class="guess-btn" data-name="${player.name}">${player.name}</button>`).join('')}
+            ${getGuessPlayerPool(mode).map((player) => `<button class="guess-btn" data-name="${player.name}">${player.name}</button>`).join('')}
           </div>
         </div>
       </div>
